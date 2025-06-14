@@ -17,10 +17,10 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
   return (
     <Card
       sx={{
-        bgcolor: "background.kinky",
+        bgcolor: "#112233",
         color: "text.primary",
         borderRadius: 2,
-        border: "1px solid #444",
+        border: "1px solid #444444",
         height: "100%",
         display: "flex",
         flexDirection: "column",

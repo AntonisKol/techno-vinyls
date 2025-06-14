@@ -42,14 +42,20 @@ const ReleasesList = () => {
   const filteredReleases = data.results.filter(isAllowedRelease);
 
   return (
-    <Box sx={{ height: "100vh", overflow: "hidden" }}>
+    <Box
+      sx={{
+        display: "flex",
+        height: "100vh",
+        overflow: "hidden",
+      }}
+    >
       <Grid container sx={{ height: "100%" }}>
         {/* Left Column (1/3) */}
         <Grid
           item
           xs={4}
           sx={{
-            bgcolor: "#717171",
+            bgcolor: "#112233",
             color: "#000",
             display: "flex",
             flexDirection: "column",
@@ -58,12 +64,13 @@ const ReleasesList = () => {
           }}
         >
           <Typography
-            variant="h2"
+            variant="h1"
             sx={{
               fontWeight: "bold",
               fontSize: "23rem",
               textAlign: "center",
               mt: 2,
+              pointerEvents: "none",
             }}
           >
             Techno Vinyls
@@ -74,14 +81,28 @@ const ReleasesList = () => {
           item
           xs={8}
           sx={{
-            bgcolor: "background.default",
+            bgcolor: "black",
             height: "100%",
             overflowY: "auto",
             padding: 2,
             display: "flex",
             flexDirection: "column",
+            paddingTop: "40vh",
+            position: "relative",
           }}
         >
+          <Typography
+            variant="h4"
+            sx={{
+              fontSize: 150,
+              transform: "translateX(-50%)",
+              color: "white",
+              pointerEvents: "none",
+            }}
+          >
+            Techno Vinyls
+          </Typography>
+
           <Grid container spacing={2}>
             {filteredReleases.map((release) => (
               <Grid item xs={12} sm={6} md={4} lg={3} xl={2.4} key={release.id}>
