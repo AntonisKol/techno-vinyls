@@ -1,10 +1,20 @@
-import { Card, Typography, Link, Box } from "@mui/material";
-import { useGetReleaseDetailsQuery } from "../../api/releasesApi";
-import { ReleaseSummary } from "../../types/release";
+import { useEffect } from "react";
+import { ReleaseSummary, ReleaseDetails } from "../../types/release";
+import { Box, Card, Link, Typography } from "@mui/material";
 import theme from "../../theme";
 
-const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
-  const { data: details, isLoading } = useGetReleaseDetailsQuery(release.id);
+const ReleaseCard = ({
+  release,
+  preloadDetails,
+  details,
+}: {
+  release: ReleaseSummary;
+  preloadDetails: () => void;
+  details?: ReleaseDetails;
+}) => {
+  useEffect(() => {
+    preloadDetails();
+  }, [preloadDetails]);
 
   const catnos = details?.labels?.map((label) => label.catno).filter(Boolean);
   const priceFormatted = details?.lowest_price
@@ -13,14 +23,12 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
         currency: "EUR",
       }).format(details.lowest_price)
     : null;
-
   return (
     <Card
       sx={{
-        bgcolor: "#112233",
         color: "text.primary",
         borderRadius: 2,
-        border: "1px solid #444444",
+        border: "1px solidrgb(67, 136, 53)",
         height: "100%",
         display: "flex",
         flexDirection: "column",
@@ -58,8 +66,11 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
           </Box>
 
           <Typography variant="body2" sx={{ fontSize: 12 }}>
-            {release.format.join(", ")}
+            {Array.isArray(release.format)
+              ? release.format.join(", ")
+              : "Format N/A"}
           </Typography>
+
           <Typography
             variant="body2"
             sx={{ fontSize: 12, fontStyle: "italic" }}
@@ -81,11 +92,7 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
               color: theme.palette.mode,
             }}
           >
-            {isLoading
-              ? "Loading price..."
-              : priceFormatted
-              ? `Lowest price: ${priceFormatted}`
-              : "Price N/A"}
+            {priceFormatted ? `Lowest price: ${priceFormatted}` : "Price N/A"}
           </Typography>
         </Box>
       </Box>
