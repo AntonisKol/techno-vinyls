@@ -1,15 +1,13 @@
-export type ReleaseSummary = {
+export interface ReleaseSummary {
   id: number;
   title: string;
-  year: number;
-  format: string[];
   cover_image: string;
-  uri: string;
-  style?: string[];
-  genre?: string[];
-  artists_sort: string;
+  format: string[];
+  year: number;
+  genre: string[];
+  style: string[];
   lowest_price?: number;
-};
+}
 
 export type ReleaseDetails = ReleaseSummary & {
   labels?: { name: string; catno: string }[];

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Box, Button, Grid, Typography } from "@mui/material";
 
 import ReleaseCard from "../ReleaseCard";
@@ -32,6 +32,25 @@ const ReleasesList = () => {
   // Get paginated releases
   const { data, error, isLoading } = useGetTechnoVinylReleasesQuery({ page });
 
+  const topRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to top when page changes
+  useEffect(() => {
+    if (topRef.current) {
+      topRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [page]);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    // 👉 Works because right panel has overflowY: auto
+    setTimeout(() => {
+      scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }, 100); // delay to allow content render
+  };
+
   if (error) return <div>Error loading releases.</div>;
   if (isLoading) return <div>Loading...</div>;
   if (!data || !Array.isArray(data.results) || data.results.length === 0)
@@ -41,6 +60,7 @@ const ReleasesList = () => {
 
   return (
     <Box
+      ref={topRef} // 👈 attach ref to top container
       sx={{
         display: "flex",
         height: "100vh",
@@ -73,9 +93,9 @@ const ReleasesList = () => {
             Techno Vinyls
           </Typography>
         </Grid>
-
         {/* Right Column */}
         <Grid
+          ref={scrollRef}
           item
           xs={8}
           sx={{
@@ -85,22 +105,10 @@ const ReleasesList = () => {
             padding: 2,
             display: "flex",
             flexDirection: "column",
-            paddingTop: "40vh",
+            paddingTop: "30vh",
             position: "relative",
           }}
         >
-          <Typography
-            variant="h4"
-            sx={{
-              fontSize: 150,
-              transform: "translateX(-50%)",
-              color: "white",
-              pointerEvents: "none",
-            }}
-          >
-            Techno Vinyls
-          </Typography>
-
           <Grid container spacing={2}>
             {filteredReleases.map((release) => (
               <Grid item xs={12} sm={6} md={4} lg={3} xl={2.4} key={release.id}>
@@ -122,18 +130,14 @@ const ReleasesList = () => {
             }}
           >
             <Button
-              variant="outlined"
+              onClick={() => handlePageChange(page - 1)}
               disabled={page === 1}
-              onClick={() => setPage((p) => Math.max(p - 1, 1))}
             >
               Previous
             </Button>
             <Button
-              variant="outlined"
+              onClick={() => handlePageChange(page + 1)}
               disabled={page >= data.pagination.pages}
-              onClick={() =>
-                setPage((p) => Math.min(p + 1, data.pagination.pages))
-              }
             >
               Next
             </Button>

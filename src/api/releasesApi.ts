@@ -14,7 +14,7 @@ export const releasesApi = createApi({
   endpoints: (builder) => ({
     getTechnoVinylReleases: builder.query<SearchResponse, { page?: number }>({
       query: ({ page = 1 }) =>
-        `database/search?format=Vinyl&genre=Electronic&style=Techno&type=release&sort=year&sort_order=desc&page=${page}&per_page=100`,
+        `database/search?format=Vinyl&genre=Electronic&style=Techno&type=release&sort=year&sort_order=desc&page=${page}&per_page=25`,
     }),
 
     getReleaseDetails: builder.query<ReleaseDetails, number>({
