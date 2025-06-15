@@ -9,11 +9,13 @@ app.use(cors());
 const DISCOGS_TOKEN = process.env.DISCOGS_TOKEN;
 const PORT = process.env.PORT || 4000;
 
-app.get("/api/discogs/database/search", async (req, res) => {
-  try {
-    const queryString = new URLSearchParams(req.query).toString();
-    const url = `https://api.discogs.com/database/search?${queryString}`;
+app.get("/api/discogs/*", async (req, res) => {
+  const path = req.params[0];
+  const url = `https://api.discogs.com/${path}?${new URLSearchParams(
+    req.query
+  )}`;
 
+  try {
     const response = await fetch(url, {
       headers: {
         "User-Agent": "YourAppName/1.0",
@@ -21,15 +23,18 @@ app.get("/api/discogs/database/search", async (req, res) => {
       },
     });
 
-    if (!response.ok) {
-      return res.status(response.status).json({ error: "Discogs API error" });
-    }
+    const text = await response.text();
 
-    const data = await response.json();
-    res.json(data);
+    try {
+      const data = JSON.parse(text);
+      res.json(data);
+    } catch (err) {
+      console.error(`❌ JSON parse failed for ${req.url}`, err);
+      res.status(502).json({ error: "Invalid JSON from Discogs" });
+    }
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("Proxy error:", err);
+    res.status(500).json({ error: "Proxy failed" });
   }
 });
 

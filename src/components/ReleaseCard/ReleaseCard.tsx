@@ -17,18 +17,18 @@ const ReleaseCard = ({
   }, [preloadDetails]);
 
   const catnos = details?.labels?.map((label) => label.catno).filter(Boolean);
-  const priceFormatted = details?.lowest_price
+  const priceFormatted = release.lowest_price
     ? new Intl.NumberFormat("de-DE", {
         style: "currency",
         currency: "EUR",
-      }).format(details.lowest_price)
-    : null;
+      }).format(release.lowest_price)
+    : "Price N/A";
+
   return (
     <Card
       sx={{
         color: "text.primary",
         borderRadius: 2,
-        border: "1px solidrgb(67, 136, 53)",
         height: "100%",
         display: "flex",
         flexDirection: "column",
