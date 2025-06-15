@@ -1,45 +1,43 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Box, Button, Grid, Typography } from "@mui/material";
 
 import ReleaseCard from "../ReleaseCard";
-import { useGetTechnoVinylReleasesQuery } from "../../api/releasesApi";
-import { ReleaseSummary } from "../../types/release";
-
-const excludedStyles = [
-  "Experimental",
-  "Downtempo",
-  "Ambient",
-  "Breakbeat",
-  "Drum n Bass",
-  "Dubstep",
-  "EDM",
-  "IDM",
-  "Electro",
-  "Progressive House",
-  "Trance",
-  "Hardcore",
-  "Hardstyle",
-  "Tech House",
-  "Deep House",
-  "House",
-  "Minimal",
-  "Trip Hop",
-];
-
-const isAllowedRelease = (release: ReleaseSummary) => {
-  if (!release.style) return true;
-  return !release.style.some((style) => excludedStyles.includes(style));
-};
+import {
+  releasesApi,
+  useGetTechnoVinylReleasesQuery,
+} from "../../api/releasesApi";
+import { ReleaseDetails } from "../../types/release";
 
 const ReleasesList = () => {
+  // Cache for release details
+  const detailsCacheRef = useRef<Record<number, ReleaseDetails>>({});
+
+  // Use lazy query hook from API slice
+  const [fetchDetails] = releasesApi.endpoints.getReleaseDetails.useLazyQuery();
+
   const [page, setPage] = useState(1);
 
+  // Prefetch details and cache
+  const prefetchDetails = async (id: number) => {
+    if (detailsCacheRef.current[id]) return; // Already cached
+
+    try {
+      const result = await fetchDetails(id).unwrap();
+      detailsCacheRef.current[id] = result;
+    } catch (err) {
+      console.error(`Failed to fetch release ${id}:`, err);
+    }
+  };
+
+  // Get paginated releases
   const { data, error, isLoading } = useGetTechnoVinylReleasesQuery({ page });
 
   if (error) return <div>Error loading releases.</div>;
   if (isLoading) return <div>Loading...</div>;
-  if (!data?.results.length) return <div>No releases found.</div>;
-  const filteredReleases = data.results.filter(isAllowedRelease);
+  if (!data || !Array.isArray(data.results) || data.results.length === 0)
+    return <div>No releases found.</div>;
+
+  const filteredReleases = data.results;
 
   return (
     <Box
@@ -50,12 +48,11 @@ const ReleasesList = () => {
       }}
     >
       <Grid container sx={{ height: "100%" }}>
-        {/* Left Column (1/3) */}
+        {/* Left Column */}
         <Grid
           item
           xs={4}
           sx={{
-            bgcolor: "#112233",
             color: "#000",
             display: "flex",
             flexDirection: "column",
@@ -77,6 +74,7 @@ const ReleasesList = () => {
           </Typography>
         </Grid>
 
+        {/* Right Column */}
         <Grid
           item
           xs={8}
@@ -106,7 +104,11 @@ const ReleasesList = () => {
           <Grid container spacing={2}>
             {filteredReleases.map((release) => (
               <Grid item xs={12} sm={6} md={4} lg={3} xl={2.4} key={release.id}>
-                <ReleaseCard key={release.id} release={release} />
+                <ReleaseCard
+                  release={release}
+                  preloadDetails={() => prefetchDetails(release.id)}
+                  details={detailsCacheRef.current[release.id]}
+                />
               </Grid>
             ))}
           </Grid>
@@ -130,7 +132,7 @@ const ReleasesList = () => {
               variant="outlined"
               disabled={page >= data.pagination.pages}
               onClick={() =>
-                setPage((p) => Math.max(p + 1, data.pagination.pages || p + 1))
+                setPage((p) => Math.min(p + 1, data.pagination.pages))
               }
             >
               Next

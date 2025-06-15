@@ -6,6 +6,7 @@ export type ReleaseSummary = {
   cover_image: string;
   uri: string;
   style?: string[];
+  genre?: string[];
   artists_sort: string;
   lowest_price?: number;
 };
