@@ -23,7 +23,7 @@ export const StyledAppDescription = styled(Typography)(() => ({
   pointerEvents: "none",
   variant: "h1",
   padding: 20,
-  marginBottom: 30,
+  marginBottom: 50,
   color: "#999999",
 }));
 
@@ -50,7 +50,7 @@ export const StyledRightColumnContainer = styled(Grid)(() => ({
 }));
 
 export const StyledButtonsContainer = styled(Box)(() => ({
-  mt: 2,
+  marginTop: 40,
   display: "flex",
   justifyContent: "center",
   gap: 2,
