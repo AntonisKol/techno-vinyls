@@ -1,150 +1,105 @@
 import { useEffect, useRef, useState } from "react";
-import { Box, Button, Grid, Typography } from "@mui/material";
-
+import { Button, Grid } from "@mui/material";
 import ReleaseCard from "../ReleaseCard";
+import { useGetTechnoVinylReleasesQuery } from "../../api/releasesApi";
+import { ReleaseSummary } from "../../types/release";
+import { useReleaseDetailsCache } from "../../hooks/useReleaseDetailsCache";
 import {
-  releasesApi,
-  useGetTechnoVinylReleasesQuery,
-} from "../../api/releasesApi";
-import { ReleaseDetails } from "../../types/release";
+  StyledAppDescription,
+  StyledButtonsContainer,
+  StyledContainer,
+  StyledHeader,
+  StyledLeftColumnContainer,
+  StyledRightColumnContainer,
+} from "./styled";
+import { filterStrictlyTechnoReleases } from "../../helpers";
 
 const ReleasesList = () => {
-  // Cache for release details
-  const detailsCacheRef = useRef<Record<number, ReleaseDetails>>({});
+  const [displayPage, setDisplayPage] = useState(1);
+  const [rawPage, setRawPage] = useState(1);
+  const [filteredReleases, setFilteredReleases] = useState<ReleaseSummary[]>(
+    []
+  );
 
-  // Use lazy query hook from API slice
-  const [fetchDetails] = releasesApi.endpoints.getReleaseDetails.useLazyQuery();
-
-  const [page, setPage] = useState(1);
-
-  // Prefetch details and cache
-  const prefetchDetails = async (id: number) => {
-    if (detailsCacheRef.current[id]) return; // Already cached
-
-    try {
-      const result = await fetchDetails(id).unwrap();
-      detailsCacheRef.current[id] = result;
-    } catch (err) {
-      console.error(`Failed to fetch release ${id}:`, err);
-    }
-  };
-
-  // Get paginated releases
-  const { data, error, isLoading } = useGetTechnoVinylReleasesQuery({ page });
+  const { prefetchDetails, cache } = useReleaseDetailsCache();
 
   const topRef = useRef<HTMLDivElement>(null);
-
-  // Scroll to top when page changes
-  useEffect(() => {
-    if (topRef.current) {
-      topRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [page]);
-
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage);
-    // 👉 Works because right panel has overflowY: auto
+  const releasesPerPage = 10;
+  const { data, isLoading, error } = useGetTechnoVinylReleasesQuery({
+    page: rawPage,
+  });
+
+  useEffect(() => {
+    if (topRef.current) topRef.current.scrollIntoView({ behavior: "smooth" });
     setTimeout(() => {
       scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-    }, 100); // delay to allow content render
+    }, 100);
+  }, [displayPage]);
+
+  useEffect(() => {
+    if (!data?.results) return;
+
+    const technoOnly = filterStrictlyTechnoReleases(data.results);
+    setFilteredReleases((prev) => [...prev, ...technoOnly]);
+  }, [data]);
+
+  const totalPages = Math.ceil(filteredReleases.length / releasesPerPage);
+  const currentPageReleases = filteredReleases.slice(
+    (displayPage - 1) * releasesPerPage,
+    displayPage * releasesPerPage
+  );
+
+  const handleNextPage = () => {
+    const nextPage = displayPage + 1;
+    if (nextPage > totalPages) setRawPage((prev) => prev + 1);
+    setDisplayPage(nextPage);
+  };
+
+  const handlePrevPage = () => {
+    if (displayPage > 1) setDisplayPage((prev) => prev - 1);
   };
 
   if (error) return <div>Error loading releases.</div>;
-  if (isLoading) return <div>Loading...</div>;
-  if (!data || !Array.isArray(data.results) || data.results.length === 0)
-    return <div>No releases found.</div>;
-
-  const filteredReleases = data.results;
+  if (!filteredReleases.length && isLoading) return <div>Loading...</div>;
 
   return (
-    <Box
-      ref={topRef} // 👈 attach ref to top container
-      sx={{
-        display: "flex",
-        height: "100vh",
-        overflow: "hidden",
-      }}
-    >
+    <StyledContainer ref={topRef}>
       <Grid container sx={{ height: "100%" }}>
-        {/* Left Column */}
-        <Grid
-          item
-          xs={4}
-          sx={{
-            color: "#000",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            padding: 4,
-          }}
-        >
-          <Typography
-            variant="h1"
-            sx={{
-              fontWeight: "bold",
-              fontSize: "23rem",
-              textAlign: "center",
-              mt: 2,
-              pointerEvents: "none",
-            }}
-          >
-            Techno Vinyls
-          </Typography>
-        </Grid>
-        {/* Right Column */}
-        <Grid
-          ref={scrollRef}
-          item
-          xs={8}
-          sx={{
-            bgcolor: "black",
-            height: "100%",
-            overflowY: "auto",
-            padding: 2,
-            display: "flex",
-            flexDirection: "column",
-            paddingTop: "30vh",
-            position: "relative",
-          }}
-        >
+        <StyledLeftColumnContainer item xs={4}>
+          <StyledHeader>Techno Vinyls</StyledHeader>
+        </StyledLeftColumnContainer>
+
+        <StyledRightColumnContainer ref={scrollRef} item xs={8}>
+          <StyledAppDescription>
+            This page exclusively filters vinyl-only releases within the Techno
+            genre, excluding any combined or crossover styles such as Dub
+            Techno. It displays detailed release information along with the
+            current lowest available price. Upcoming features include filters by
+            country and release year, sorting from most recent to oldest, and an
+            artist search function.
+          </StyledAppDescription>
           <Grid container spacing={2}>
-            {filteredReleases.map((release) => (
+            {currentPageReleases.map((release) => (
               <Grid item xs={12} sm={6} md={4} lg={3} xl={2.4} key={release.id}>
                 <ReleaseCard
                   release={release}
                   preloadDetails={() => prefetchDetails(release.id)}
-                  details={detailsCacheRef.current[release.id]}
+                  details={cache[release.id]}
                 />
               </Grid>
             ))}
           </Grid>
-
-          <Box
-            sx={{
-              mt: 2,
-              display: "flex",
-              justifyContent: "center",
-              gap: 2,
-            }}
-          >
-            <Button
-              onClick={() => handlePageChange(page - 1)}
-              disabled={page === 1}
-            >
+          <StyledButtonsContainer>
+            <Button onClick={handlePrevPage} disabled={displayPage === 1}>
               Previous
             </Button>
-            <Button
-              onClick={() => handlePageChange(page + 1)}
-              disabled={page >= data.pagination.pages}
-            >
-              Next
-            </Button>
-          </Box>
-        </Grid>
+            <Button onClick={handleNextPage}>Next</Button>
+          </StyledButtonsContainer>
+        </StyledRightColumnContainer>
       </Grid>
-    </Box>
+    </StyledContainer>
   );
 };
 
