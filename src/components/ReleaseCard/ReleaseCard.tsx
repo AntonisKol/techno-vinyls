@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { ReleaseSummary, ReleaseDetails } from "../../types/release";
-import { Box, Card, Link, Typography } from "@mui/material";
+import { Box, Card, CircularProgress, Link, Typography } from "@mui/material";
 import theme from "../../theme";
 
 const ReleaseCard = ({
@@ -17,11 +17,11 @@ const ReleaseCard = ({
   }, [preloadDetails]);
 
   const catnos = details?.labels?.map((label) => label.catno).filter(Boolean);
-  const priceFormatted = release.lowest_price
+  const priceFormatted = details?.lowest_price
     ? new Intl.NumberFormat("de-DE", {
         style: "currency",
         currency: "EUR",
-      }).format(release.lowest_price)
+      }).format(details.lowest_price)
     : "Price N/A";
 
   return (
@@ -64,40 +64,43 @@ const ReleaseCard = ({
               {release.title}
             </Typography>
           </Box>
-
-          <Typography variant="body2" sx={{ fontSize: 12 }}>
-            {Array.isArray(release.format)
-              ? release.format.join(", ")
-              : "Format N/A"}
-          </Typography>
-
-          <Typography
-            variant="body2"
-            sx={{ fontSize: 12, fontStyle: "italic" }}
-          >
-            {catnos && catnos.length > 0
-              ? `Cat No: ${catnos.join(", ")}`
-              : "Cat No N/A"}
-          </Typography>
-          <Typography variant="subtitle2" sx={{ fontSize: 12 }}>
-            {release.year}
-          </Typography>
         </Box>
-        <Box sx={{ mt: 3 }}>
-          <Typography
-            variant="body2"
-            sx={{
-              fontSize: 12,
-              fontWeight: 800,
-              color: theme.palette.mode,
-            }}
-          >
-            {priceFormatted ? `Lowest price: ${priceFormatted}` : "Price N/A"}
-          </Typography>
+        <Box>
+          {details ? (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "space-between",
+                flexDirection: "column",
+                justifyContent: "center",
+                height: "100%",
+              }}
+            >
+              <Typography variant="body2" sx={{ fontSize: 12 }}>
+                {catnos && catnos.length > 0
+                  ? `Cat No: ${catnos.join(", ")}`
+                  : "Cat No N/A"}
+              </Typography>
+              <Typography variant="subtitle2" sx={{ fontSize: 12 }}>
+                {release.year}
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  color: theme.palette.mode,
+                }}
+              >
+                Lowest price: {priceFormatted}
+              </Typography>
+            </Box>
+          ) : (
+            <CircularProgress size={16} thickness={1} />
+          )}
         </Box>
       </Box>
 
-      {/* Footer: Link */}
       <Box>
         <Link
           href={`https://www.discogs.com/release/${release.id}`}
