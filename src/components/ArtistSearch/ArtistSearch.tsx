@@ -22,7 +22,7 @@ const ArtistSearch = ({
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
-      if (artistSearch.trim().length > 0) {
+      if (artistSearch.trim().length > 2) {
         onSearch?.(artistSearch.trim());
       }
     }, 300);
