@@ -14,16 +14,23 @@ const ArtistSearch = ({
 }: ArtistSearchProps) => {
   const [artistSearch, setArtistSearch] = useState("");
 
+  // Clear the input field when search is reset
   useEffect(() => {
     if (!hasActiveSearch) {
       setArtistSearch("");
     }
   }, [hasActiveSearch]);
 
-  const handleArtistSearch = () => {
-    if (!artistSearch) return;
-    if (onSearch) onSearch(artistSearch);
-  };
+  // Debounced auto-search while typing
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      if (artistSearch.trim().length > 0) {
+        onSearch?.(artistSearch.trim());
+      }
+    }, 400); // Adjust debounce time as needed
+
+    return () => clearTimeout(delayDebounce);
+  }, [artistSearch, onSearch]);
 
   return (
     <Box sx={{ display: "flex", gap: "1rem", marginBottom: "1.5rem" }}>
@@ -46,18 +53,7 @@ const ArtistSearch = ({
           },
         }}
         onChange={(e) => setArtistSearch(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") handleArtistSearch();
-        }}
       />
-      <Button
-        variant="text"
-        onClick={handleArtistSearch}
-        sx={{ color: "lightgrey" }}
-      >
-        Search
-      </Button>
-
       {hasActiveSearch && (
         <Button
           variant="text"
