@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Box, Button, TextField } from "@mui/material";
 
 interface ArtistSearchProps {
@@ -14,6 +14,12 @@ const ArtistSearch = ({
 }: ArtistSearchProps) => {
   const [artistSearch, setArtistSearch] = useState("");
 
+  useEffect(() => {
+    if (!hasActiveSearch) {
+      setArtistSearch("");
+    }
+  }, [hasActiveSearch]);
+
   const handleArtistSearch = () => {
     if (!artistSearch) return;
     if (onSearch) onSearch(artistSearch);
@@ -26,6 +32,19 @@ const ArtistSearch = ({
         variant="outlined"
         size="small"
         value={artistSearch}
+        sx={{
+          "& .MuiOutlinedInput-root": {
+            "&.Mui-focused fieldset": {
+              borderColor: "lightgrey",
+            },
+            "&.Mui-focused input": {
+              color: "lightgrey",
+            },
+          },
+          "& .MuiInputLabel-root.Mui-focused": {
+            color: "lightgrey",
+          },
+        }}
         onChange={(e) => setArtistSearch(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter") handleArtistSearch();
