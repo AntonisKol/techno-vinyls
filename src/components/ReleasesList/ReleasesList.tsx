@@ -15,6 +15,7 @@ import {
 import { filterStrictlyTechnoReleases } from "../../helpers";
 import ArtistSearch from "../ArtistSearch/ArtistSearch";
 import { useSearchReleasesByArtistQuery } from "../../api/releasesApi";
+import { locales } from "../../locales/loceles";
 
 const ReleasesList = () => {
   const [displayPage, setDisplayPage] = useState(1);
@@ -99,16 +100,8 @@ const ReleasesList = () => {
         <StyledLeftColumnContainer item xs={4}>
           <StyledHeader>Techno Vinyls</StyledHeader>
         </StyledLeftColumnContainer>
-
         <StyledRightColumnContainer ref={scrollRef} item xs={8}>
-          <StyledAppDescription>
-            This page exclusively filters vinyl-only releases within the Techno
-            genre, excluding any combined or crossover styles such as Dub
-            Techno, Experimental etc. It displays detailed release information
-            along with the current lowest available price. Upcoming features
-            include filters by country and release year and sorting from most
-            recent to oldest.
-          </StyledAppDescription>
+          <StyledAppDescription>{locales.appDescription}</StyledAppDescription>
           <ArtistSearch
             onSearch={(name) => {
               setArtistName(name);
