@@ -13,6 +13,8 @@ import {
   StyledRightColumnContainer,
 } from "./styled";
 import { filterStrictlyTechnoReleases } from "../../helpers";
+import ArtistSearch from "../ArtistSearch/ArtistSearch";
+import { useSearchReleasesByArtistQuery } from "../../api/releasesApi";
 
 const ReleasesList = () => {
   const [displayPage, setDisplayPage] = useState(1);
@@ -20,15 +22,23 @@ const ReleasesList = () => {
   const [filteredReleases, setFilteredReleases] = useState<ReleaseSummary[]>(
     []
   );
+  const [artistName, setArtistName] = useState<string | null>(null);
 
   const { prefetchDetails, cache } = useReleaseDetailsCache();
 
   const topRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const releasesPerPage = 10;
   const { data, isLoading, error } = useGetTechnoVinylReleasesQuery({
     page: rawPage,
+  });
+
+  const {
+    data: artistSearchData,
+    isLoading: artistSearchLoading,
+    error: artistSearchError,
+  } = useSearchReleasesByArtistQuery(artistName ?? "", {
+    skip: !artistName,
   });
 
   useEffect(() => {
@@ -43,10 +53,18 @@ const ReleasesList = () => {
 
     const technoOnly = filterStrictlyTechnoReleases(data.results);
     setFilteredReleases((prev) => [...prev, ...technoOnly]);
-  }, [data]);
+  }, [data, artistName]);
 
-  const totalPages = Math.ceil(filteredReleases.length / releasesPerPage);
-  const currentPageReleases = filteredReleases.slice(
+  const releasesToShow = artistName
+    ? artistSearchData?.results ?? []
+    : filteredReleases;
+
+  const filteredArtistReleases = filterStrictlyTechnoReleases(releasesToShow);
+
+  const releasesPerPage = 10;
+  const totalPages = Math.ceil(filteredArtistReleases.length / releasesPerPage);
+
+  const currentPageReleases = filteredArtistReleases.slice(
     (displayPage - 1) * releasesPerPage,
     displayPage * releasesPerPage
   );
@@ -61,8 +79,19 @@ const ReleasesList = () => {
     if (displayPage > 1) setDisplayPage((prev) => prev - 1);
   };
 
-  if (error) return <div>Error loading releases.</div>;
+  if (error || artistSearchError) return <div>Error loading releases.</div>;
+  if (
+    (artistName && artistSearchLoading) ||
+    (!artistName && isLoading && !filteredReleases.length)
+  )
+    return <div>Loading...</div>;
   if (!filteredReleases.length && isLoading) return <div>Loading...</div>;
+
+  const handleResetSearch = () => {
+    setArtistName(null);
+    setDisplayPage(1);
+    setFilteredReleases([]);
+  };
 
   return (
     <StyledContainer ref={topRef}>
@@ -80,6 +109,16 @@ const ReleasesList = () => {
             country and release year, sorting from most recent to oldest, and an
             artist search function.
           </StyledAppDescription>
+          <ArtistSearch
+            onSearch={(name) => {
+              setArtistName(name);
+              setDisplayPage(1);
+              setFilteredReleases([]);
+            }}
+            onReset={handleResetSearch}
+            hasActiveSearch={!!artistName}
+          />
+
           <Grid container spacing={2}>
             {currentPageReleases.map((release) => (
               <Grid item xs={12} sm={6} md={4} lg={3} xl={2.4} key={release.id}>
