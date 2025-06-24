@@ -20,8 +20,18 @@ export const releasesApi = createApi({
     getReleaseDetails: builder.query<ReleaseDetails, number>({
       query: (id) => `releases/${id}`,
     }),
+
+    searchReleasesByArtist: builder.query<SearchResponse, string>({
+      query: (artistName) =>
+        `database/search?artist=${encodeURIComponent(
+          artistName
+        )}&format=Vinyl&type=release&sort=year&sort_order=desc&page=1&per_page=100`,
+    }),
   }),
 });
 
-export const { useGetTechnoVinylReleasesQuery, useGetReleaseDetailsQuery } =
-  releasesApi;
+export const {
+  useGetTechnoVinylReleasesQuery,
+  useGetReleaseDetailsQuery,
+  useSearchReleasesByArtistQuery,
+} = releasesApi;
