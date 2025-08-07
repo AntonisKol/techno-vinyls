@@ -2,9 +2,6 @@ import { useRef } from "react";
 import { ReleaseDetails } from "../types/release";
 import { releasesApi } from "../api/releasesApi";
 
-/**
- * Custom hook to lazily fetch and cache release details.
- */
 export const useReleaseDetailsCache = () => {
   const cacheRef = useRef<Record<number, ReleaseDetails>>({});
   const [fetchDetails] = releasesApi.endpoints.getReleaseDetails.useLazyQuery();

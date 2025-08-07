@@ -29,7 +29,7 @@ app.get("/api/discogs/*", async (req, res) => {
       const data = JSON.parse(text);
       res.json(data);
     } catch (err) {
-      console.error(`❌ JSON parse failed for ${req.url}`, err);
+      console.error(`JSON parse failed for ${req.url}`, err);
       res.status(502).json({ error: "Invalid JSON from Discogs" });
     }
   } catch (err) {

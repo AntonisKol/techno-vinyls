@@ -69,7 +69,7 @@ const ReleaseCard = ({
         {/* Fixed-height title section */}
         <Box
           sx={{
-            height: 60, // 👈 ensures consistent vertical space
+            height: 60,
             overflow: "hidden",
             mb: 1,
             px: 1,
@@ -91,7 +91,7 @@ const ReleaseCard = ({
         {/* Fixed-position content section */}
         <Box
           sx={{
-            minHeight: 60, // 👈 ensures same height for this section across all cards
+            minHeight: 60,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
