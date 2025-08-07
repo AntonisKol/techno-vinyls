@@ -1,8 +1,5 @@
 import { ReleaseSummary } from "./types/release";
 
-/**
- * Filters only releases that are strictly "Techno" (no fusion genres).
- */
 export const filterStrictlyTechnoReleases = (
   releases: ReleaseSummary[]
 ): ReleaseSummary[] => {
