@@ -7,4 +7,11 @@ jest.mock("./components/ReleasesList", () => () => <main>Techno Vinyls</main>);
 test('renders the Techno Vinyls app', () => {
   render(<App />);
   expect(screen.getByRole("main")).toHaveTextContent("Techno Vinyls");
+  expect(screen.getByRole("navigation", { name: "Main navigation" })).toHaveTextContent(
+    "HomeADNS SPACETechno VinylsMarket Trends"
+  );
+  expect(screen.getByRole("link", { name: "Techno Vinyls" })).toHaveAttribute(
+    "aria-current",
+    "page"
+  );
 });
