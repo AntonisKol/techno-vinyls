@@ -4,20 +4,27 @@ const theme = createTheme({
   palette: {
     mode: "dark",
     background: {
-      default: "#121212",
-      kinky: "#717171",
-      paper: "#1e1e1e",
+      default: "#07080b",
+      paper: "#111318",
     },
     text: {
-      primary: "#e0e0e0",
-      secondary: "#aaaaaa",
+      primary: "#eceef2",
+      secondary: "#9aa0ad",
     },
     primary: {
-      main: "#90caf9",
+      main: "#a0c2a7",
+      contrastText: "#07080b",
     },
+    divider: "#30343b",
+  },
+  shape: {
+    borderRadius: 2,
   },
   typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Chakra Petch", "Roboto", "Helvetica", "Arial", sans-serif',
+    button: {
+      textTransform: "none",
+    },
   },
 });
 

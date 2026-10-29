@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { StyledButton, StyledContainer, StyledTextField } from "./styled";
 
 interface ArtistSearchProps {
@@ -13,6 +13,7 @@ const ArtistSearch = ({
   hasActiveSearch,
 }: ArtistSearchProps) => {
   const [artistSearch, setArtistSearch] = useState("");
+  const lastSearchedTerm = useRef<string | null>(null);
 
   useEffect(() => {
     if (!hasActiveSearch) {
@@ -22,13 +23,20 @@ const ArtistSearch = ({
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
-      if (artistSearch.trim().length > 2) {
-        onSearch?.(artistSearch.trim());
+      const searchTerm = artistSearch.trim();
+      if (searchTerm.length >= 2) {
+        if (lastSearchedTerm.current !== searchTerm) {
+          lastSearchedTerm.current = searchTerm;
+          onSearch?.(searchTerm);
+        }
+      } else {
+        lastSearchedTerm.current = null;
+        if (hasActiveSearch) onReset?.();
       }
     }, 300);
 
     return () => clearTimeout(delayDebounce);
-  }, [artistSearch, onSearch]);
+  }, [artistSearch, hasActiveSearch, onReset, onSearch]);
 
   return (
     <StyledContainer>
@@ -36,8 +44,10 @@ const ArtistSearch = ({
         label="Search Artist"
         variant="outlined"
         size="small"
+        fullWidth
         value={artistSearch}
         onChange={(e) => setArtistSearch(e.target.value)}
+        inputProps={{ "aria-label": "Search artist" }}
       />
       {hasActiveSearch && (
         <StyledButton variant="text" onClick={onReset}>

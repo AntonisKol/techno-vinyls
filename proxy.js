@@ -14,27 +14,39 @@ app.get("/api/discogs/*", async (req, res) => {
   const url = `https://api.discogs.com/${path}?${new URLSearchParams(
     req.query
   )}`;
+  const headers = {
+    "User-Agent": "TechnoVinyls/1.0 (Discogs release discovery app)",
+  };
+  if (DISCOGS_TOKEN) {
+    headers.Authorization = `Discogs token=${DISCOGS_TOKEN}`;
+  }
 
   try {
     const response = await fetch(url, {
-      headers: {
-        "User-Agent": "YourAppName/1.0",
-        Authorization: `Discogs token=${DISCOGS_TOKEN}`,
-      },
+      headers,
+      timeout: 15000,
     });
 
     const text = await response.text();
+    let data;
 
     try {
-      const data = JSON.parse(text);
-      res.json(data);
+      data = JSON.parse(text);
     } catch (err) {
-      console.error(`JSON parse failed for ${req.url}`, err);
-      res.status(502).json({ error: "Invalid JSON from Discogs" });
+      if (!response.ok) {
+        return res.status(response.status).json({
+          error: text || response.statusText || "Discogs request failed",
+        });
+      }
+      console.error(`Invalid Discogs response for ${req.url}`, err);
+      return res.status(502).json({ error: "Invalid JSON from Discogs" });
     }
+
+    if (!response.ok) return res.status(response.status).json(data);
+    res.json(data);
   } catch (err) {
     console.error("Proxy error:", err);
-    res.status(500).json({ error: "Proxy failed" });
+    res.status(502).json({ error: "Could not reach Discogs" });
   }
 });
 
