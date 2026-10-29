@@ -177,7 +177,7 @@ const ReleasesList = () => {
         sx={{
           color: "primary.main",
           fontSize: 11,
-          fontFamily: "monospace",
+          fontFamily: '"Share Tech Mono", ui-monospace, monospace',
           letterSpacing: ".12em",
           textTransform: "uppercase",
           mb: 1,

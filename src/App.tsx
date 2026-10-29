@@ -31,7 +31,7 @@ const StyledBrand = styled("a")(({ theme }) => ({
   textDecoration: "none",
   "& svg": {
     display: "block",
-    width: 248,
+    width: 192,
     height: "auto",
   },
   "& text": {
@@ -43,7 +43,7 @@ const StyledBrand = styled("a")(({ theme }) => ({
   },
   "@media (max-width: 520px)": {
     "& svg": {
-      width: 220,
+      width: 170,
     },
   },
 }));
@@ -90,19 +90,19 @@ const StyledFooter = styled("footer")(({ theme }) => ({
 const SiteNavigation = () => (
   <StyledNavigation>
     <StyledBrand href="/" aria-label="ADNS Audio home">
-      <svg viewBox="0 0 310 48" role="img" aria-labelledby="brand-title">
+      <svg viewBox="0 0 240 48" role="img" aria-labelledby="brand-title">
         <title id="brand-title">ADNS Audio</title>
         <text x="0" y="35" fontSize="31" fontWeight="700" letterSpacing="1">
           ADNS Audio
         </text>
         <g>
-          <rect x="217" y="22" width="2.5" height="7" rx="1.25" />
-          <rect x="223" y="18" width="2.5" height="15" rx="1.25" />
-          <rect x="229" y="13" width="2.5" height="25" rx="1.25" />
-          <rect x="235" y="20" width="2.5" height="11" rx="1.25" />
-          <rect x="241" y="15" width="2.5" height="21" rx="1.25" />
-          <rect x="247" y="20" width="2.5" height="11" rx="1.25" />
-          <rect x="253" y="22" width="2.5" height="7" rx="1.25" />
+          <rect x="197" y="22" width="2.5" height="7" rx="1.25" />
+          <rect x="203" y="18" width="2.5" height="15" rx="1.25" />
+          <rect x="209" y="13" width="2.5" height="25" rx="1.25" />
+          <rect x="215" y="20" width="2.5" height="11" rx="1.25" />
+          <rect x="221" y="15" width="2.5" height="21" rx="1.25" />
+          <rect x="227" y="20" width="2.5" height="11" rx="1.25" />
+          <rect x="233" y="22" width="2.5" height="7" rx="1.25" />
         </g>
       </svg>
     </StyledBrand>

@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { ReleaseSummary, ReleaseDetails } from "../types/release";
+import { apiBase } from "./apiBase";
 
 interface SearchResponse {
   pagination: { page: number; pages: number; per_page: number; items: number };
@@ -9,7 +10,7 @@ interface SearchResponse {
 export const releasesApi = createApi({
   reducerPath: "releasesApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:4000/api/discogs/",
+    baseUrl: apiBase(),
   }),
   endpoints: (builder) => ({
     getTechnoVinylReleases: builder.query<SearchResponse, { page?: number }>({

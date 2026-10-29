@@ -1,33 +1,63 @@
 # Techno Vinyls
 
-A Discogs-powered release browser for vinyl tagged exclusively with the
-`Techno` style. Browse recent releases, search by artist, view available release
-artwork, compare catalogue numbers and Discogs' current lowest listed prices,
-and open the release on Discogs.
+A Discogs-powered browser for vinyl releases tagged **only** with the `Techno`
+style. Browse the newest releases, search by artist, see artwork, catalogue
+numbers and Discogs' current lowest listed price, and open a release on Discogs.
+
+Live at **<https://adnsaudio.com/techno-vinyls/app/>**, part of
+[ADNS Audio](https://adnsaudio.com/).
+
+## What the list shows
+
+Vinyl releases in Discogs' Electronic genre whose only style is Techno, newest
+first. Releases that also carry another style (say Techno and House) are left
+out, and artist search uses the same filter. Pages hold twelve releases; the
+next Discogs page loads on its own when a page runs out. Discogs search reaches
+the newest 10,000 results of a query, even when it reports more.
 
 ## Run locally
 
-Install dependencies with `npm ci`. Discogs reads work without a token; you can
-optionally set `DISCOGS_TOKEN` in `.env` to authenticate requests and get the
-higher authenticated API rate limit. Start the proxy and React app together
-with `npm start`:
+```sh
+npm ci
+cp .env.example .env   # optional: add a Discogs token for the higher rate limit
+npm start
+```
 
-- React app: <http://localhost:3000>
-- Discogs proxy: <http://localhost:4000>
+- App: <http://localhost:3000>
+- Discogs proxy (`proxy.js`): <http://localhost:4000>
 
-The artist search starts after two characters. Results are filtered to remove
-cross-genre styles, shown twelve at a time, and can be browsed across Discogs
-search pages. The page indicator shows the current app page; Discogs' total
-search count includes mixed-style results that this app filters out. Discogs
-allows browsing at most 100 pages (10,000 results) per query, even when its
-reported match count is larger.
+Discogs reads work without a token. With one, keep it in `.env`, which git
+ignores. Never put it in browser code.
 
-The proxy caches search results for 15 minutes and release details for 5 minutes
-to reduce repeated Discogs requests. For a hosted deployment, keep the optional
-`DISCOGS_TOKEN` on the server that runs the proxy; never expose it in browser
-code or a static site's public environment.
+## Test
 
-## Verify
+```sh
+CI=true npm test -- --watchAll=false --runInBand   # the app (Jest)
+npm run test:worker                                 # the hosted proxy (node:test)
+npm run build
+```
 
-- `npm test -- --watchAll=false --runInBand`
-- `npm run build`
+## How it is hosted
+
+- **App:** `npm run build:site` builds for `/techno-vinyls/app/` with the API
+  address `https://api.adnsaudio.com/api/discogs/`. The build is published with
+  the ADNS Audio website.
+- **Proxy:** [`worker/proxy.mjs`](worker/proxy.mjs) is a Cloudflare Worker at
+  `api.adnsaudio.com`. It forwards only the two Discogs reads the app makes
+  (search and release details), adds the token from a Worker secret, caches
+  results (search 15 minutes, releases 5 minutes) and answers browsers only
+  from adnsaudio.com and localhost.
+
+```sh
+npx wrangler login
+npx wrangler secret put DISCOGS_TOKEN --config worker/wrangler.toml
+npm run deploy:worker
+```
+
+## Built with
+
+React, TypeScript, MUI and RTK Query, on data from the
+[Discogs API](https://www.discogs.com/developers). This app uses Discogs' API
+but is not affiliated with, sponsored or endorsed by Discogs.
+
+© Antonios Kolovos. All rights reserved.
