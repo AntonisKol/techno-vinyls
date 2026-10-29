@@ -12,9 +12,13 @@ interface SearchResponse {
 // Discogs allows 25 requests a minute per IP without a token (the hosted app)
 // and 60 with one (proxy.js with a token); stay a little under either.
 const base = apiBase();
+const limit = base === LOCAL_API_BASE ? 55 : 22;
 const limiter = createRateLimiter({
-  limit: base === LOCAL_API_BASE ? 55 : 22,
+  limit,
   windowMs: 60_000,
+  // Price lookups (priority 1) leave a few requests a minute for searches,
+  // so Next never waits for the next Discogs page.
+  caps: { 1: limit - 4 },
 });
 
 export const releasesApi = createApi({

@@ -77,4 +77,28 @@ describe("createRateLimiter", () => {
     await flush();
     expect(started).toBe(true);
   });
+
+  it("keeps room for searches when price lookups reach their share", async () => {
+    const clock = fakeClock();
+    const limiter = createRateLimiter({
+      limit: 4,
+      windowMs: 60_000,
+      caps: { 1: 2 },
+      ...clock,
+    });
+    const started: string[] = [];
+    ["price 1", "price 2", "price 3"].forEach((name) =>
+      limiter.schedule(1).then(() => started.push(name))
+    );
+    await flush();
+    expect(started).toEqual(["price 1", "price 2"]);
+
+    limiter.schedule(0).then(() => started.push("search"));
+    await flush();
+    expect(started).toEqual(["price 1", "price 2", "search"]);
+
+    await clock.advance(60_000);
+    await flush();
+    expect(started).toEqual(["price 1", "price 2", "search", "price 3"]);
+  });
 });

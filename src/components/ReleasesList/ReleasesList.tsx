@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Box, Button, Typography } from "@mui/material";
 import ReleaseCard from "../ReleaseCard";
+import ReleaseCardSkeleton from "../ReleaseCardSkeleton/ReleaseCardSkeleton";
 import {
   useGetTechnoVinylReleasesQuery,
   useSearchReleasesByArtistQuery,
@@ -19,6 +20,16 @@ import {
 } from "./styled";
 
 const RELEASES_PER_PAGE = 12;
+
+// Read by screen readers, not shown: the skeletons show it on screen.
+const visuallyHidden = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  overflow: "hidden",
+  clip: "rect(0 0 0 0)",
+  whiteSpace: "nowrap",
+} as const;
 // Discogs search stops at page 100 of 100 results, whatever the total.
 const DISCOGS_MAX_RESULTS = 10000;
 
@@ -104,12 +115,12 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
   // Set together with filteredReleases, so the page's matches are counted.
   const rawPageProcessed = pagination?.page === rawPage;
 
-  // Keep one release beyond the current page loaded, so pages stay full and
-  // Next knows whether there is more. Discogs pages without an exact Techno
-  // match are skipped by loading the following page straight away.
+  // Keep the next page loaded as well, so pages stay full and Next is instant.
+  // Discogs pages without an exact Techno match are skipped by loading the
+  // following page straight away.
   useEffect(() => {
     if (isFetching || error || !rawPageProcessed || !hasMoreRemote) return;
-    if (filteredReleases.length > displayPage * RELEASES_PER_PAGE) return;
+    if (filteredReleases.length > (displayPage + 1) * RELEASES_PER_PAGE) return;
     setRawPage((page) => page + 1);
   }, [
     displayPage,
@@ -148,7 +159,9 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
   const canGoNext = displayPage < totalPages || hasMoreRemote;
 
   const handleNextPage = () => {
-    if (isFetching || !canGoNext) return;
+    // Paging stays possible while the next Discogs page loads in the
+    // background; skeletons fill the page until its releases arrive.
+    if (!canGoNext) return;
     setDisplayPage((page) => page + 1);
   };
 
@@ -164,7 +177,24 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
         DISCOGS_MAX_RESULTS
       )
     : 0;
+  // Pages to expect: the share of exact matches so far, applied to the
+  // results Discogs search can reach.
+  const reachable = pagination
+    ? Math.min(pagination.items, DISCOGS_MAX_RESULTS)
+    : 0;
+  const estimatedPages =
+    checkedResults > 0
+      ? Math.ceil(
+          ((filteredReleases.length / checkedResults) * reachable) /
+            RELEASES_PER_PAGE
+        )
+      : 0;
   const showError = Boolean(error);
+  // Skeleton cards fill the page's empty slots while releases are loading.
+  const skeletons =
+    (isLoading || isFetching) && !showError
+      ? RELEASES_PER_PAGE - currentPageReleases.length
+      : 0;
   const showEmpty =
     !isLoading &&
     !isFetching &&
@@ -236,11 +266,11 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
       )}
 
       {isFetching && (
-        <StyledStatus role="status">
+        <Box role="status" sx={visuallyHidden}>
           {filteredReleases.length > 0
             ? "Loading more releases…"
             : "Loading releases…"}
-        </StyledStatus>
+        </Box>
       )}
 
       {showEmpty && (
@@ -249,10 +279,13 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
         </StyledStatus>
       )}
 
-      {currentPageReleases.length > 0 && (
-        <StyledReleaseGrid>
+      {currentPageReleases.length + skeletons > 0 && (
+        <StyledReleaseGrid aria-busy={skeletons > 0}>
           {currentPageReleases.map((release) => (
             <ReleaseCard release={release} key={release.id} />
+          ))}
+          {Array.from({ length: skeletons }, (_, index) => (
+            <ReleaseCardSkeleton key={`skeleton-${index}`} />
           ))}
         </StyledReleaseGrid>
       )}
@@ -261,15 +294,18 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
         <StyledButtonsContainer>
           <Button
             onClick={() => setDisplayPage((page) => Math.max(1, page - 1))}
-            disabled={displayPage === 1 || isFetching}
+            disabled={displayPage === 1}
           >
             Previous
           </Button>
           <Typography variant="caption" color="text.secondary">
             Page {displayPage}
             {!hasMoreRemote && totalPages > 0 ? ` of ${totalPages}` : ""}
+            {hasMoreRemote && estimatedPages > displayPage
+              ? ` of about ${estimatedPages.toLocaleString("en")}`
+              : ""}
           </Typography>
-          <Button onClick={handleNextPage} disabled={!canGoNext || isFetching}>
+          <Button onClick={handleNextPage} disabled={!canGoNext}>
             Next
           </Button>
         </StyledButtonsContainer>

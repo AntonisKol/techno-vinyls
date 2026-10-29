@@ -135,8 +135,8 @@ describe("ReleasesList", () => {
       expect(screen.getAllByTestId("release")).toHaveLength(1);
     });
     expect(HTMLElement.prototype.scrollIntoView).not.toHaveBeenCalled();
-    expect(screen.getByText("Page 2")).toBeInTheDocument();
-    expect(screen.queryByText(/of 2/)).not.toBeInTheDocument();
+    expect(screen.getByText(/^Page 2 of about/)).toBeInTheDocument();
+    expect(screen.queryByText(/of 2$/)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Previous" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Next" })).toBeEnabled();
   });
@@ -168,7 +168,7 @@ describe("ReleasesList", () => {
     const next = screen.getByRole("button", { name: "Next" });
     for (let i = 0; i < 4; i += 1) fireEvent.click(next);
 
-    expect(screen.getByText(/^Page /)).toHaveTextContent(/^Page 5$/);
+    expect(screen.getByText(/^Page /)).toHaveTextContent(/^Page 5 of about/);
     expect(screen.getAllByTestId("release")).toHaveLength(12);
     expect(screen.getAllByTestId("release")[0]).toHaveTextContent("Release 49");
     expect(requestedPages()).toEqual(expect.arrayContaining([1, 2, 3]));
@@ -259,5 +259,66 @@ describe("ReleasesList", () => {
     expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
     expect(screen.getByText(/whose only style is Techno/)).toBeInTheDocument();
     expect(screen.getAllByTestId("release")).toHaveLength(3);
+  });
+
+  it("shows skeleton cards while the first releases load", () => {
+    mockUseGetTechnoVinylReleasesQuery.mockReturnValue({
+      currentData: undefined,
+      isLoading: true,
+      isFetching: true,
+      error: undefined,
+      refetch: jest.fn(),
+    });
+
+    render(<ReleasesList />);
+
+    expect(screen.getAllByTestId("release-skeleton")).toHaveLength(12);
+    expect(screen.getByRole("status")).toHaveTextContent("Loading releases…");
+  });
+
+  it("fills a partly loaded page with skeletons while more load", () => {
+    const pages = discogsPages([{ techno: 15 }, { techno: 15 }]);
+    mockUseGetTechnoVinylReleasesQuery.mockImplementation((args) =>
+      args.page === 1
+        ? pages(args)
+        : { ...pages({ page: 1 }), currentData: undefined, isFetching: true }
+    );
+
+    render(<ReleasesList />);
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+
+    expect(screen.getAllByTestId("release")).toHaveLength(3);
+    expect(screen.getAllByTestId("release-skeleton")).toHaveLength(9);
+  });
+
+  it("shows no skeletons when Discogs fails", () => {
+    render(<ReleasesList />);
+
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+    expect(screen.queryByTestId("release-skeleton")).not.toBeInTheDocument();
+  });
+
+  it("estimates how many pages there are while Discogs has more", () => {
+    // 28 of the first 100 match; Discogs reports 183,350, of which search
+    // reaches 10,000: about 2,800 releases, 234 pages of 12.
+    mockUseGetTechnoVinylReleasesQuery.mockReturnValue({
+      currentData: {
+        pagination: { page: 1, pages: 100, per_page: 100, items: 183350 },
+        results: [
+          ...Array.from({ length: 28 }, (_, i) => release(i + 1)),
+          ...Array.from({ length: 72 }, (_, i) =>
+            release(i + 100, ["Techno", "House"])
+          ),
+        ],
+      },
+      isLoading: false,
+      isFetching: false,
+      error: undefined,
+      refetch: jest.fn(),
+    });
+
+    render(<ReleasesList />);
+
+    expect(screen.getByText(/^Page /)).toHaveTextContent("Page 1 of about 234");
   });
 });
