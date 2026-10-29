@@ -2,7 +2,9 @@ import { apiBase, LOCAL_API_BASE } from "./apiBase";
 
 describe("apiBase", () => {
   it("uses the address the hosted build sets", () => {
-    expect(apiBase("https://api.discogs.com/")).toBe("https://api.discogs.com/");
+    expect(apiBase("https://api.discogs.com/")).toBe(
+      "https://api.discogs.com/"
+    );
   });
 
   it("adds the trailing slash the endpoint paths need", () => {

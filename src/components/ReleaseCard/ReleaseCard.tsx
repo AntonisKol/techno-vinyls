@@ -19,8 +19,13 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
     isError,
   } = useGetReleaseDetailsQuery(release.id);
 
+  // The search result's catalogue number shows until the details arrive.
   const catnos = Array.from(
-    new Set(details?.labels?.map((label) => label.catno).filter(Boolean))
+    new Set(
+      (details?.labels?.map((label) => label.catno) ?? [release.catno]).filter(
+        (catno): catno is string => Boolean(catno) && catno !== "none"
+      )
+    )
   );
   const primaryImage = details?.images?.find(
     (image) => image.type === "primary"
@@ -37,9 +42,7 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
     }
   });
   const artworkUrls = Array.from(
-    new Set(
-      artworkCandidates.filter((url): url is string => Boolean(url))
-    )
+    new Set(artworkCandidates.filter((url): url is string => Boolean(url)))
   );
   const [artworkIndex, setArtworkIndex] = useState(0);
   const artworkUrl = artworkUrls[artworkIndex];

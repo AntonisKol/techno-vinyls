@@ -8,6 +8,8 @@ export interface ReleaseSummary {
   genre: string[];
   style: string[];
   lowest_price?: number | null;
+  // In search results; release details have it per label instead.
+  catno?: string;
 }
 
 export type ReleaseDetails = ReleaseSummary & {

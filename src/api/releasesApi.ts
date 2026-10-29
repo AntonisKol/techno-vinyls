@@ -1,17 +1,25 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { ReleaseSummary, ReleaseDetails } from "../types/release";
-import { apiBase } from "./apiBase";
+import { apiBase, LOCAL_API_BASE } from "./apiBase";
+import { createRateLimiter } from "./rateLimiter";
+import { throttledBaseQuery } from "./throttledBaseQuery";
 
 interface SearchResponse {
   pagination: { page: number; pages: number; per_page: number; items: number };
   results: ReleaseSummary[];
 }
 
+// Discogs allows 25 requests a minute per IP without a token (the hosted app)
+// and 60 with one (proxy.js with a token); stay a little under either.
+const base = apiBase();
+const limiter = createRateLimiter({
+  limit: base === LOCAL_API_BASE ? 55 : 22,
+  windowMs: 60_000,
+});
+
 export const releasesApi = createApi({
   reducerPath: "releasesApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: apiBase(),
-  }),
+  baseQuery: throttledBaseQuery(limiter, fetchBaseQuery({ baseUrl: base })),
   endpoints: (builder) => ({
     getTechnoVinylReleases: builder.query<SearchResponse, { page?: number }>({
       query: ({ page = 1 }) =>

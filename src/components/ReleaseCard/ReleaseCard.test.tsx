@@ -38,9 +38,12 @@ describe("ReleaseCard", () => {
   it("shows Discogs' lowest price and artwork from release details", () => {
     render(<ReleaseCard release={release} />);
 
-    expect(screen.getByText("Discogs lowest price: 18,50 €")).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "Artwork for Test release" }))
-      .toHaveAttribute("src", "https://images.example/cover.jpg");
+    expect(
+      screen.getByText("Discogs lowest price: 18,50 €")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: "Artwork for Test release" })
+    ).toHaveAttribute("src", "https://images.example/cover.jpg");
   });
 
   it("shows unavailable when a release has no current listing price", () => {
@@ -53,8 +56,9 @@ describe("ReleaseCard", () => {
 
     render(<ReleaseCard release={release} />);
 
-    expect(screen.getByText("Discogs lowest price: Unavailable"))
-      .toBeInTheDocument();
+    expect(
+      screen.getByText("Discogs lowest price: Unavailable")
+    ).toBeInTheDocument();
   });
 
   it("shows a friendly message when a price lookup is temporarily unavailable", () => {
@@ -67,22 +71,45 @@ describe("ReleaseCard", () => {
 
     render(<ReleaseCard release={release} />);
 
-    expect(screen.getByText("Discogs lowest price: Temporarily unavailable"))
-      .toBeInTheDocument();
+    expect(
+      screen.getByText("Discogs lowest price: Temporarily unavailable")
+    ).toBeInTheDocument();
     expect(screen.queryByText(/rate limit/i)).not.toBeInTheDocument();
   });
 
   it("tries other Discogs artwork before showing the fallback", () => {
     render(<ReleaseCard release={release} />);
 
-    fireEvent.error(screen.getByRole("img", { name: "Artwork for Test release" }));
+    fireEvent.error(
+      screen.getByRole("img", { name: "Artwork for Test release" })
+    );
 
-    expect(screen.getByRole("img", { name: "Artwork for Test release" }))
-      .toHaveAttribute("src", "https://images.example/cover-back.jpg");
+    expect(
+      screen.getByRole("img", { name: "Artwork for Test release" })
+    ).toHaveAttribute("src", "https://images.example/cover-back.jpg");
 
-    fireEvent.error(screen.getByRole("img", { name: "Artwork for Test release" }));
+    fireEvent.error(
+      screen.getByRole("img", { name: "Artwork for Test release" })
+    );
 
-    expect(screen.getByRole("img", { name: "Artwork unavailable" }))
-      .toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: "Artwork unavailable" })
+    ).toBeInTheDocument();
+  });
+
+  it("shows the search result's catalogue number while the details load", () => {
+    mockUseGetReleaseDetailsQuery.mockReturnValue({
+      currentData: undefined,
+      isLoading: true,
+      isError: false,
+      error: undefined,
+    });
+
+    render(<ReleaseCard release={{ ...release, catno: "TAR040" }} />);
+
+    expect(screen.getByText("TAR040")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Loading Discogs lowest price")
+    ).toBeInTheDocument();
   });
 });

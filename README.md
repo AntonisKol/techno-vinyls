@@ -45,6 +45,12 @@ visitor gets their own limit (25 a minute) instead of sharing one. A proxy on
 shared cloud addresses was tried and dropped: other users of those addresses
 used up the limit. The build is published with the ADNS Audio website.
 
+Each card looks up its price separately, so the app paces its own requests
+(`src/api/rateLimiter.ts`): at most 22 a minute in the hosted app (55 locally
+with a token), searches ahead of price lookups, and one retry a minute later if
+Discogs refuses anyway. Paging quickly shows the cards at once; their prices
+fill in as the limit allows.
+
 ## Built with
 
 React, TypeScript, MUI and RTK Query, on data from the
