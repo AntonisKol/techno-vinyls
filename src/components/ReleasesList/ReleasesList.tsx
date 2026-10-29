@@ -11,14 +11,23 @@ import ArtistSearch from "../ArtistSearch/ArtistSearch";
 import {
   StyledAppDescription,
   StyledButtonsContainer,
-  StyledCatalogueInfo,
   StyledContainer,
+  StyledFilterNote,
   StyledHeader,
   StyledReleaseGrid,
   StyledStatus,
 } from "./styled";
 
 const RELEASES_PER_PAGE = 12;
+// Discogs search stops at page 100 of 100 results, whatever the total.
+const DISCOGS_MAX_RESULTS = 10000;
+
+interface Pagination {
+  page: number;
+  pages: number;
+  perPage: number;
+  items: number;
+}
 
 const ReleasesList = () => {
   const [displayPage, setDisplayPage] = useState(1);
@@ -27,6 +36,7 @@ const ReleasesList = () => {
     []
   );
   const [artistName, setArtistName] = useState<string | null>(null);
+  const [pagination, setPagination] = useState<Pagination | null>(null);
   const loadedPages = useRef(new Set<string>());
 
   const {
@@ -55,7 +65,7 @@ const ReleasesList = () => {
   const isLoading = artistName === null ? technoLoading : artistLoading;
   const isFetching = artistName === null ? technoFetching : artistFetching;
   const error = artistName === null ? technoError : artistError;
-  const totalRemotePages = activeData?.pagination.pages ?? 0;
+  const totalRemotePages = pagination?.pages ?? 0;
 
   useEffect(() => {
     if (!activeData) return;
@@ -63,13 +73,23 @@ const ReleasesList = () => {
     const requestKey = `${artistName ?? "all"}:${activeData.pagination.page}`;
     if (loadedPages.current.has(requestKey)) return;
     loadedPages.current.add(requestKey);
+    setPagination({
+      page: activeData.pagination.page,
+      pages: activeData.pagination.pages,
+      perPage: activeData.pagination.per_page,
+      items: activeData.pagination.items,
+    });
 
     const technoOnly = filterStrictlyTechnoReleases(activeData.results);
-    setFilteredReleases((previous) =>
-      activeData.pagination.page === 1
-        ? technoOnly
-        : [...previous, ...technoOnly]
-    );
+    setFilteredReleases((previous) => {
+      if (activeData.pagination.page === 1) return technoOnly;
+      // Discogs sorts by year only, so a release can show up on two pages.
+      const seen = new Set(previous.map((release) => release.id));
+      return [
+        ...previous,
+        ...technoOnly.filter((release) => !seen.has(release.id)),
+      ];
+    });
   }, [activeData, artistName]);
 
   const totalPages = Math.ceil(filteredReleases.length / RELEASES_PER_PAGE);
@@ -78,10 +98,32 @@ const ReleasesList = () => {
     displayPage * RELEASES_PER_PAGE
   );
 
+  const hasMoreRemote = rawPage < totalRemotePages;
+  // Set together with filteredReleases, so the page's matches are counted.
+  const rawPageProcessed = pagination?.page === rawPage;
+
+  // Keep one release beyond the current page loaded, so pages stay full and
+  // Next knows whether there is more. Discogs pages without an exact Techno
+  // match are skipped by loading the following page straight away.
   useEffect(() => {
-    if (isFetching || displayPage <= totalPages || totalPages === 0) return;
+    if (isFetching || error || !rawPageProcessed || !hasMoreRemote) return;
+    if (filteredReleases.length > displayPage * RELEASES_PER_PAGE) return;
+    setRawPage((page) => page + 1);
+  }, [
+    displayPage,
+    error,
+    filteredReleases.length,
+    hasMoreRemote,
+    isFetching,
+    pagination,
+    rawPageProcessed,
+  ]);
+
+  useEffect(() => {
+    if (isFetching || hasMoreRemote) return;
+    if (displayPage <= totalPages || totalPages === 0) return;
     setDisplayPage(totalPages);
-  }, [displayPage, isFetching, totalPages]);
+  }, [displayPage, hasMoreRemote, isFetching, totalPages]);
 
   const handleSearch = useCallback((name: string) => {
     loadedPages.current.clear();
@@ -89,6 +131,7 @@ const ReleasesList = () => {
     setRawPage(1);
     setDisplayPage(1);
     setFilteredReleases([]);
+    setPagination(null);
   }, []);
 
   const handleResetSearch = useCallback(() => {
@@ -97,18 +140,14 @@ const ReleasesList = () => {
     setRawPage(1);
     setDisplayPage(1);
     setFilteredReleases([]);
+    setPagination(null);
   }, []);
 
-  const handleNextPage = () => {
-    if (isFetching) return;
-    if (displayPage < totalPages) {
-      setDisplayPage((page) => page + 1);
-      return;
-    }
+  const canGoNext = displayPage < totalPages || hasMoreRemote;
 
-    if (rawPage < totalRemotePages) {
-      setRawPage((page) => page + 1);
-    }
+  const handleNextPage = () => {
+    if (isFetching || !canGoNext) return;
+    setDisplayPage((page) => page + 1);
   };
 
   const handleRetry = () => {
@@ -116,10 +155,20 @@ const ReleasesList = () => {
     else refetchArtist();
   };
 
-  const canGoNext = displayPage < totalPages || rawPage < totalRemotePages;
+  const checkedResults = pagination
+    ? Math.min(
+        pagination.page * pagination.perPage,
+        pagination.items,
+        DISCOGS_MAX_RESULTS
+      )
+    : 0;
   const showError = Boolean(error);
   const showEmpty =
-    !isLoading && !isFetching && !showError && filteredReleases.length === 0;
+    !isLoading &&
+    !isFetching &&
+    !showError &&
+    !hasMoreRemote &&
+    filteredReleases.length === 0;
 
   return (
     <StyledContainer>
@@ -142,14 +191,24 @@ const ReleasesList = () => {
         compare catalogue details and current lowest listed prices, then open a
         release on Discogs.
       </StyledAppDescription>
-      {activeData && (
-        <StyledCatalogueInfo variant="caption">
-          Discogs reports{" "}
-          {new Intl.NumberFormat().format(activeData.pagination.items)} matching
-          candidates. Mixed-style releases are excluded, and browsing is capped
-          at the first 10,000 search results.
-        </StyledCatalogueInfo>
-      )}
+
+      <StyledFilterNote>
+        <strong>What you see:</strong> vinyl releases in Discogs' Electronic
+        genre whose only style is Techno, newest first. Releases that also carry
+        another style, such as Techno and House, are left out. Artist search
+        uses the same filter.
+        {pagination && (
+          <span data-testid="filter-counts">
+            {" "}
+            {filteredReleases.length.toLocaleString("en")} found in the first{" "}
+            {checkedResults.toLocaleString("en")} of{" "}
+            {pagination.items.toLocaleString("en")} Discogs results
+            {pagination.items > DISCOGS_MAX_RESULTS
+              ? " (Discogs search reaches the newest 10,000)."
+              : "."}
+          </span>
+        )}
+      </StyledFilterNote>
 
       <ArtistSearch
         onSearch={handleSearch}
@@ -188,7 +247,7 @@ const ReleasesList = () => {
         </StyledReleaseGrid>
       )}
 
-      {(filteredReleases.length > 0 || rawPage < totalRemotePages) && (
+      {(filteredReleases.length > 0 || hasMoreRemote) && (
         <StyledButtonsContainer>
           <Button
             onClick={() => setDisplayPage((page) => Math.max(1, page - 1))}
@@ -198,11 +257,9 @@ const ReleasesList = () => {
           </Button>
           <Typography variant="caption" color="text.secondary">
             Page {displayPage}
+            {!hasMoreRemote && totalPages > 0 ? ` of ${totalPages}` : ""}
           </Typography>
-          <Button
-            onClick={handleNextPage}
-            disabled={!canGoNext || isFetching}
-          >
+          <Button onClick={handleNextPage} disabled={!canGoNext || isFetching}>
             Next
           </Button>
         </StyledButtonsContainer>

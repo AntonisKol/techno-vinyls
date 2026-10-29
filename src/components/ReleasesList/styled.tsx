@@ -29,12 +29,14 @@ export const StyledAppDescription = styled(Typography)(({ theme }) => ({
   lineHeight: 1.65,
 }));
 
-export const StyledCatalogueInfo = styled(Typography)(({ theme }) => ({
-  display: "block",
-  marginTop: -14,
-  marginBottom: 24,
+export const StyledFilterNote = styled(Typography)(({ theme }) => ({
+  maxWidth: 720,
+  margin: "-12px 0 24px",
+  paddingLeft: 18,
   color: theme.palette.text.secondary,
-  lineHeight: 1.5,
+  fontSize: 13,
+  lineHeight: 1.6,
+  "& strong": { color: theme.palette.text.primary, fontWeight: 500 },
 }));
 
 export const StyledReleaseGrid = styled(Box)(() => ({
