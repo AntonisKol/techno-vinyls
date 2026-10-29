@@ -29,8 +29,15 @@ const SEARCH_PARAMS = [
 const SEARCH_TTL = 15 * 60;
 const RELEASE_TTL = 5 * 60;
 
-const corsHeaders = (origin) =>
-  ALLOWED_ORIGINS.includes(origin)
+// EXTRA_ORIGINS (comma-separated) adds origins for a local preview, e.g.
+// `wrangler dev --var EXTRA_ORIGINS:http://localhost:8731`.
+const allowedOrigins = (env) => [
+  ...ALLOWED_ORIGINS,
+  ...(env.EXTRA_ORIGINS ?? "").split(",").filter(Boolean),
+];
+
+const corsHeaders = (origin, env) =>
+  allowedOrigins(env).includes(origin)
     ? {
         "Access-Control-Allow-Origin": origin,
         "Access-Control-Allow-Methods": "GET, OPTIONS",
@@ -67,7 +74,7 @@ export const upstreamUrl = (requestUrl) => {
 
 export const handle = async (request, env, deps) => {
   const origin = request.headers.get("Origin") ?? "";
-  const cors = corsHeaders(origin);
+  const cors = corsHeaders(origin, env);
 
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
   if (request.method !== "GET") return json(405, { error: "Only GET" }, cors);

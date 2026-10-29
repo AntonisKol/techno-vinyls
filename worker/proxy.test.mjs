@@ -104,3 +104,13 @@ test("reports 502 when Discogs can't be reached", async () => {
   const response = await handle(get(SEARCH), {}, fake.deps);
   assert.equal(response.status, 502);
 });
+
+test("accepts an extra origin for a local preview", async () => {
+  const fake = setup();
+  const response = await handle(
+    get(SEARCH, "http://localhost:8731"),
+    { EXTRA_ORIGINS: "http://localhost:8731" },
+    fake.deps
+  );
+  assert.equal(response.headers.get("Access-Control-Allow-Origin"), "http://localhost:8731");
+});

@@ -32,7 +32,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "build:site": "PUBLIC_URL=/techno-vinyls/app REACT_APP_API_BASE=https://api.adnsaudio.com/api/discogs/ react-scripts build",
+    "build:site": "GENERATE_SOURCEMAP=false PUBLIC_URL=/techno-vinyls/app REACT_APP_API_BASE=https://api.adnsaudio.com/api/discogs/ react-scripts build",
     "test:worker": "node --test worker/*.test.mjs",
     "deploy:worker": "npx wrangler deploy --config worker/wrangler.toml"
   },
