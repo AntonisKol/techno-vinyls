@@ -2,8 +2,9 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
+jest.mock("./components/ReleasesList", () => () => <main>Techno Vinyls</main>);
+
+test('renders the Techno Vinyls app', () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  expect(screen.getByRole("main")).toHaveTextContent("Techno Vinyls");
 });

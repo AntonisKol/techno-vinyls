@@ -1,20 +1,23 @@
-import { useEffect, useRef, useState } from "react";
-import { Button, Grid } from "@mui/material";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Button, Typography } from "@mui/material";
 import ReleaseCard from "../ReleaseCard";
-import { useGetTechnoVinylReleasesQuery } from "../../api/releasesApi";
+import {
+  useGetTechnoVinylReleasesQuery,
+  useSearchReleasesByArtistQuery,
+} from "../../api/releasesApi";
 import { ReleaseSummary } from "../../types/release";
-import { useReleaseDetailsCache } from "../../hooks/useReleaseDetailsCache";
+import { filterStrictlyTechnoReleases } from "../../helpers";
+import ArtistSearch from "../ArtistSearch/ArtistSearch";
 import {
   StyledAppDescription,
   StyledButtonsContainer,
   StyledContainer,
   StyledHeader,
-  StyledLeftColumnContainer,
-  StyledRightColumnContainer,
+  StyledReleaseGrid,
+  StyledStatus,
 } from "./styled";
-import { filterStrictlyTechnoReleases } from "../../helpers";
-import ArtistSearch from "../ArtistSearch/ArtistSearch";
-import { useSearchReleasesByArtistQuery } from "../../api/releasesApi";
+
+const RELEASES_PER_PAGE = 10;
 
 const ReleasesList = () => {
   const [displayPage, setDisplayPage] = useState(1);
@@ -23,120 +26,187 @@ const ReleasesList = () => {
     []
   );
   const [artistName, setArtistName] = useState<string | null>(null);
-
-  const { prefetchDetails, cache } = useReleaseDetailsCache();
-
+  const loadedPages = useRef(new Set<string>());
   const topRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const { data, isLoading, error } = useGetTechnoVinylReleasesQuery({
-    page: rawPage,
-  });
 
   const {
-    data: artistSearchData,
-    isLoading: artistSearchLoading,
-    error: artistSearchError,
-  } = useSearchReleasesByArtistQuery(artistName ?? "", {
-    skip: !artistName,
-  });
-
-  useEffect(() => {
-    if (topRef.current) topRef.current.scrollIntoView({ behavior: "smooth" });
-    setTimeout(() => {
-      scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-    }, 100);
-  }, [displayPage]);
-
-  useEffect(() => {
-    if (!data?.results) return;
-
-    const technoOnly = filterStrictlyTechnoReleases(data.results);
-    setFilteredReleases((prev) => [...prev, ...technoOnly]);
-  }, [data, artistName]);
-
-  const releasesToShow = artistName
-    ? artistSearchData?.results ?? []
-    : filteredReleases;
-
-  const filteredArtistReleases = filterStrictlyTechnoReleases(releasesToShow);
-
-  const releasesPerPage = 10;
-  const totalPages = Math.ceil(filteredArtistReleases.length / releasesPerPage);
-
-  const currentPageReleases = filteredArtistReleases.slice(
-    (displayPage - 1) * releasesPerPage,
-    displayPage * releasesPerPage
+    currentData: technoData,
+    isLoading: technoLoading,
+    isFetching: technoFetching,
+    error: technoError,
+    refetch: refetchTechno,
+  } = useGetTechnoVinylReleasesQuery(
+    { page: rawPage },
+    { skip: artistName !== null }
   );
 
-  const handleNextPage = () => {
-    const nextPage = displayPage + 1;
-    if (nextPage > totalPages) setRawPage((prev) => prev + 1);
-    setDisplayPage(nextPage);
-  };
+  const {
+    currentData: artistData,
+    isLoading: artistLoading,
+    isFetching: artistFetching,
+    error: artistError,
+    refetch: refetchArtist,
+  } = useSearchReleasesByArtistQuery(
+    { artistName: artistName ?? "", page: rawPage },
+    { skip: artistName === null }
+  );
 
-  const handlePrevPage = () => {
-    if (displayPage > 1) setDisplayPage((prev) => prev - 1);
-  };
+  const activeData = artistName === null ? technoData : artistData;
+  const isLoading = artistName === null ? technoLoading : artistLoading;
+  const isFetching = artistName === null ? technoFetching : artistFetching;
+  const error = artistName === null ? technoError : artistError;
+  const totalRemotePages = activeData?.pagination.pages ?? 0;
 
-  if (error || artistSearchError) return <div>Error loading releases.</div>;
-  if (
-    (artistName && artistSearchLoading) ||
-    (!artistName && isLoading && !filteredReleases.length)
-  )
-    return <div>Loading...</div>;
-  if (!filteredReleases.length && isLoading) return <div>Loading...</div>;
+  useEffect(() => {
+    if (!activeData) return;
 
-  const handleResetSearch = () => {
-    setArtistName(null);
+    const requestKey = `${artistName ?? "all"}:${activeData.pagination.page}`;
+    if (loadedPages.current.has(requestKey)) return;
+    loadedPages.current.add(requestKey);
+
+    const technoOnly = filterStrictlyTechnoReleases(activeData.results);
+    setFilteredReleases((previous) =>
+      activeData.pagination.page === 1
+        ? technoOnly
+        : [...previous, ...technoOnly]
+    );
+  }, [activeData, artistName]);
+
+  const totalPages = Math.ceil(filteredReleases.length / RELEASES_PER_PAGE);
+  const currentPageReleases = filteredReleases.slice(
+    (displayPage - 1) * RELEASES_PER_PAGE,
+    displayPage * RELEASES_PER_PAGE
+  );
+
+  useEffect(() => {
+    if (isFetching || displayPage <= totalPages || totalPages === 0) return;
+    setDisplayPage(totalPages);
+  }, [displayPage, isFetching, totalPages]);
+
+  useEffect(() => {
+    topRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [displayPage]);
+
+  const handleSearch = useCallback((name: string) => {
+    loadedPages.current.clear();
+    setArtistName(name);
+    setRawPage(1);
     setDisplayPage(1);
     setFilteredReleases([]);
+  }, []);
+
+  const handleResetSearch = useCallback(() => {
+    loadedPages.current.clear();
+    setArtistName(null);
+    setRawPage(1);
+    setDisplayPage(1);
+    setFilteredReleases([]);
+  }, []);
+
+  const handleNextPage = () => {
+    if (isFetching) return;
+    if (displayPage < totalPages) {
+      setDisplayPage((page) => page + 1);
+      return;
+    }
+
+    if (rawPage < totalRemotePages) {
+      setRawPage((page) => page + 1);
+    }
   };
+
+  const handleRetry = () => {
+    if (artistName === null) refetchTechno();
+    else refetchArtist();
+  };
+
+  const canGoNext = displayPage < totalPages || rawPage < totalRemotePages;
+  const showError = Boolean(error);
+  const isRateLimited =
+    error !== undefined && "status" in error && error.status === 429;
+  const showEmpty =
+    !isLoading && !isFetching && !showError && filteredReleases.length === 0;
 
   return (
     <StyledContainer ref={topRef}>
-      <Grid container sx={{ height: "100%" }}>
-        <StyledLeftColumnContainer item xs={4}>
-          <StyledHeader>Techno Vinyls</StyledHeader>
-        </StyledLeftColumnContainer>
-        <StyledRightColumnContainer ref={scrollRef} item xs={8}>
-          <StyledAppDescription>
-            "This page exclusively filters vinyl-only releases within the Techno
-            genre, excluding any combined or crossover styles such as Dub
-            Techno, Experimental etc. It displays detailed release information
-            along with the current lowest available price. Upcoming features
-            include filters by country and release year and sorting from most
-            recent to oldest."
-          </StyledAppDescription>
-          <ArtistSearch
-            onSearch={(name) => {
-              setArtistName(name);
-              setDisplayPage(1);
-              setFilteredReleases([]);
-            }}
-            onReset={handleResetSearch}
-            hasActiveSearch={!!artistName}
-          />
+      <Typography
+        component="p"
+        sx={{
+          color: "primary.main",
+          fontSize: 11,
+          fontFamily: "monospace",
+          letterSpacing: ".12em",
+          textTransform: "uppercase",
+          mb: 1,
+        }}
+      >
+        Record discovery · Discogs
+      </Typography>
+      <StyledHeader variant="h1">Techno Vinyls</StyledHeader>
+      <StyledAppDescription>
+        Browse vinyl releases tagged exclusively as Techno, search by artist,
+        compare catalogue details and current lowest listed prices, then open a
+        release on Discogs.
+      </StyledAppDescription>
 
-          <Grid container spacing={2}>
-            {currentPageReleases.map((release) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} xl={2.4} key={release.id}>
-                <ReleaseCard
-                  release={release}
-                  preloadDetails={() => prefetchDetails(release.id)}
-                  details={cache[release.id]}
-                />
-              </Grid>
-            ))}
-          </Grid>
-          <StyledButtonsContainer>
-            <Button onClick={handlePrevPage} disabled={displayPage === 1}>
-              Previous
-            </Button>
-            <Button onClick={handleNextPage}>Next</Button>
-          </StyledButtonsContainer>
-        </StyledRightColumnContainer>
-      </Grid>
+      <ArtistSearch
+        onSearch={handleSearch}
+        onReset={handleResetSearch}
+        hasActiveSearch={artistName !== null}
+      />
+
+      {showError && (
+        <StyledStatus role="alert">
+          {isRateLimited
+            ? "Discogs rate limit reached. Wait briefly or add a token to .env."
+            : "Could not load releases from Discogs. Check your connection and retry."}
+          <Button onClick={handleRetry} size="small">
+            Retry
+          </Button>
+        </StyledStatus>
+      )}
+
+      {isFetching && (
+        <StyledStatus role="status">
+          {filteredReleases.length > 0
+            ? "Loading more releases…"
+            : "Loading releases…"}
+        </StyledStatus>
+      )}
+
+      {showEmpty && (
+        <StyledStatus role="status">
+          No exact Techno vinyl releases found. Try another artist.
+        </StyledStatus>
+      )}
+
+      {currentPageReleases.length > 0 && (
+        <StyledReleaseGrid>
+          {currentPageReleases.map((release) => (
+            <ReleaseCard release={release} key={release.id} />
+          ))}
+        </StyledReleaseGrid>
+      )}
+
+      {(filteredReleases.length > 0 || rawPage < totalRemotePages) && (
+        <StyledButtonsContainer>
+          <Button
+            onClick={() => setDisplayPage((page) => Math.max(1, page - 1))}
+            disabled={displayPage === 1 || isFetching}
+          >
+            Previous
+          </Button>
+          <Typography variant="caption" color="text.secondary">
+            Page {displayPage} of {totalPages || "—"}
+          </Typography>
+          <Button
+            onClick={handleNextPage}
+            disabled={!canGoNext || isFetching}
+          >
+            {displayPage < totalPages ? "Next" : "Load more"}
+          </Button>
+        </StyledButtonsContainer>
+      )}
     </StyledContainer>
   );
 };

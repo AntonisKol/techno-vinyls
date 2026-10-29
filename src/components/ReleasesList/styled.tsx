@@ -1,57 +1,53 @@
-import { Box, Grid, styled, Typography } from "@mui/material";
-import spaceImage from "../../assets/spaceImage.jpg";
+import { Box, styled, Typography } from "@mui/material";
 
 export const StyledContainer = styled(Box)(() => ({
-  display: "flex",
-  height: "100vh",
-  overflow: "hidden",
+  width: "min(1200px, calc(100% - 32px))",
+  minHeight: "100vh",
+  margin: "0 auto",
+  padding: "clamp(28px, 6vw, 72px) 0",
 }));
 
 export const StyledHeader = styled(Typography)(() => ({
-  fontWeight: "bold",
-  fontSize: 300,
-  textAlign: "center",
-  mt: 2,
-  pointerEvents: "none",
-  variant: "h1",
+  margin: 0,
+  fontWeight: 700,
+  fontSize: "clamp(40px, 7vw, 76px)",
+  lineHeight: 1,
+  letterSpacing: "-.045em",
 }));
 
-export const StyledAppDescription = styled(Typography)(() => ({
-  border: ".5px solid grey",
+export const StyledAppDescription = styled(Typography)(({ theme }) => ({
+  maxWidth: 720,
+  margin: "18px 0 28px",
+  paddingLeft: 16,
+  borderLeft: `2px solid ${theme.palette.primary.main}`,
+  color: theme.palette.text.secondary,
   fontSize: 16,
-  textAlign: "center",
-  pointerEvents: "none",
-  variant: "h1",
-  padding: 20,
-  marginBottom: 50,
-  color: "#999999",
+  lineHeight: 1.65,
 }));
 
-export const StyledLeftColumnContainer = styled(Grid)(() => ({
-  color: "#000",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  padding: 4,
-  overflow: "hidden",
-}));
-
-export const StyledRightColumnContainer = styled(Grid)(() => ({
-  bgcolor: "black",
-  height: "100%",
-  overflowY: "auto",
-  padding: 10,
-  display: "flex",
-  flexDirection: "column",
-  position: "relative",
-  backgroundImage: `url(${spaceImage})`,
-  backgroundSize: "cover",
-  backgroundPosition: "center",
+export const StyledReleaseGrid = styled(Box)(() => ({
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))",
+  gap: 12,
+  marginTop: 24,
 }));
 
 export const StyledButtonsContainer = styled(Box)(() => ({
-  marginTop: 40,
   display: "flex",
+  flexWrap: "wrap",
   justifyContent: "center",
-  gap: 2,
+  alignItems: "center",
+  gap: 16,
+  marginTop: 32,
+}));
+
+export const StyledStatus = styled(Box)(({ theme }) => ({
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "center",
+  gap: 8,
+  marginTop: 20,
+  padding: "12px 14px",
+  border: `1px solid ${theme.palette.divider}`,
+  color: theme.palette.text.secondary,
 }));
