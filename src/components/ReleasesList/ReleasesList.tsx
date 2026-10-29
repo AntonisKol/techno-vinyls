@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Button, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import ReleaseCard from "../ReleaseCard";
 import {
   useGetTechnoVinylReleasesQuery,
@@ -29,7 +29,9 @@ interface Pagination {
   items: number;
 }
 
-const ReleasesList = () => {
+// embedded: rendered inside a page that has its own heading and layout
+// (the Techno Vinyls page on adnsaudio.com), so only the list is shown.
+const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
   const [displayPage, setDisplayPage] = useState(1);
   const [rawPage, setRawPage] = useState(1);
   const [filteredReleases, setFilteredReleases] = useState<ReleaseSummary[]>(
@@ -170,31 +172,37 @@ const ReleasesList = () => {
     !hasMoreRemote &&
     filteredReleases.length === 0;
 
-  return (
-    <StyledContainer>
-      <Typography
-        component="p"
-        sx={{
-          color: "primary.main",
-          fontSize: 11,
-          fontFamily: '"Share Tech Mono", ui-monospace, monospace',
-          // Same eyebrow as adnsaudio.com, so the h1 starts at the same height.
-          lineHeight: "normal",
-          letterSpacing: ".16em",
-          textTransform: "uppercase",
-          mb: "14px",
-        }}
-      >
-        Record discovery · Discogs
-      </Typography>
-      <StyledHeader variant="h1">Techno Vinyls</StyledHeader>
-      <StyledAppDescription>
-        Browse vinyl releases tagged exclusively as Techno, search by artist,
-        compare catalogue details and current lowest listed prices, then open a
-        release on Discogs.
-      </StyledAppDescription>
+  const Container = embedded ? Box : StyledContainer;
 
-      <StyledFilterNote>
+  return (
+    <Container>
+      {!embedded && (
+        <>
+          <Typography
+            component="p"
+            sx={{
+              color: "primary.main",
+              fontSize: 11,
+              fontFamily: '"Share Tech Mono", ui-monospace, monospace',
+              // Same eyebrow as adnsaudio.com, so the h1 starts at the same height.
+              lineHeight: "normal",
+              letterSpacing: ".16em",
+              textTransform: "uppercase",
+              mb: "14px",
+            }}
+          >
+            Record discovery · Discogs
+          </Typography>
+          <StyledHeader variant="h1">Techno Vinyls</StyledHeader>
+          <StyledAppDescription>
+            Browse vinyl releases tagged exclusively as Techno, search by
+            artist, compare catalogue details and current lowest listed prices,
+            then open a release on Discogs.
+          </StyledAppDescription>
+        </>
+      )}
+
+      <StyledFilterNote sx={embedded ? { mt: 0, pl: 0 } : undefined}>
         <strong>What you see:</strong> vinyl releases in Discogs' Electronic
         genre whose only style is Techno, newest first. Releases that also carry
         another style, such as Techno and House, are left out. Artist search
@@ -266,7 +274,7 @@ const ReleasesList = () => {
           </Button>
         </StyledButtonsContainer>
       )}
-    </StyledContainer>
+    </Container>
   );
 };
 

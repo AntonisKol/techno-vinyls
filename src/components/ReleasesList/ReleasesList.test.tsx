@@ -248,4 +248,16 @@ describe("ReleasesList", () => {
     rerender(<ReleasesList />);
     expect(screen.getByText(/No exact Techno/)).toBeInTheDocument();
   });
+
+  it("leaves the heading to the page when embedded, but keeps the filter note", () => {
+    mockUseGetTechnoVinylReleasesQuery.mockImplementation(
+      discogsPages([{ techno: 3 }])
+    );
+
+    render(<ReleasesList embedded />);
+
+    expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
+    expect(screen.getByText(/whose only style is Techno/)).toBeInTheDocument();
+    expect(screen.getAllByTestId("release")).toHaveLength(3);
+  });
 });

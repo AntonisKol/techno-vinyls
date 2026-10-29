@@ -1,4 +1,10 @@
-import { Box, styled, ThemeProvider, CssBaseline } from "@mui/material";
+import {
+  Box,
+  styled,
+  ThemeProvider,
+  CssBaseline,
+  ScopedCssBaseline,
+} from "@mui/material";
 import theme from "./theme";
 import ReleasesList from "./components/ReleasesList";
 
@@ -117,7 +123,19 @@ const SiteNavigation = () => (
   </StyledNavigation>
 );
 
-const App = () => {
+// embedded: inside the Techno Vinyls page on adnsaudio.com, which has the
+// site's navigation, heading and footer, and whose styles must stay as they are.
+const App = ({ embedded = false }: { embedded?: boolean }) => {
+  if (embedded) {
+    return (
+      <ThemeProvider theme={theme}>
+        <ScopedCssBaseline sx={{ bgcolor: "transparent" }}>
+          <ReleasesList embedded />
+        </ScopedCssBaseline>
+      </ThemeProvider>
+    );
+  }
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />

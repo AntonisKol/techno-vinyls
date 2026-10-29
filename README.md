@@ -4,7 +4,7 @@ A Discogs-powered browser for vinyl releases tagged **only** with the `Techno`
 style. Browse the newest releases, search by artist, see artwork, catalogue
 numbers and Discogs' current lowest listed price, and open a release on Discogs.
 
-Live at **<https://adnsaudio.com/techno-vinyls/app/>**, part of
+Live at **<https://adnsaudio.com/techno-vinyls/>**, part of
 [ADNS Audio](https://adnsaudio.com/).
 
 ## What the list shows
@@ -33,13 +33,17 @@ ignores. Never put it in browser code.
 
 ```sh
 CI=true npm test -- --watchAll=false --runInBand
+npm run test:scripts
 npm run build
 ```
 
 ## How it is hosted
 
-`npm run build:site` builds for `/techno-vinyls/app/` and copies nothing
-secret: the hosted app calls the Discogs API straight from the visitor's
+The releases render directly on the Techno Vinyls page of adnsaudio.com: the
+app finds `#techno-vinyls` there and shows only the list under the page's own
+heading. `npm run publish:site -- <path to the website repository>` builds it
+(`/techno-vinyls/app/static/`) and points the page at the new files. Nothing
+secret goes into the build: the hosted app calls the Discogs API straight from the visitor's
 browser, without a token. Discogs limits requests by IP address, so every
 visitor gets their own limit (25 a minute) instead of sharing one. A proxy on
 shared cloud addresses was tried and dropped: other users of those addresses
