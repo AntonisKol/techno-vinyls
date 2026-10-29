@@ -178,9 +178,11 @@ const ReleasesList = () => {
           color: "primary.main",
           fontSize: 11,
           fontFamily: '"Share Tech Mono", ui-monospace, monospace',
-          letterSpacing: ".12em",
+          // Same eyebrow as adnsaudio.com, so the h1 starts at the same height.
+          lineHeight: "normal",
+          letterSpacing: ".16em",
           textTransform: "uppercase",
-          mb: 1,
+          mb: "14px",
         }}
       >
         Record discovery · Discogs
