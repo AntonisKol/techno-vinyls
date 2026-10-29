@@ -21,11 +21,14 @@ export const releasesApi = createApi({
       query: (id) => `releases/${id}`,
     }),
 
-    searchReleasesByArtist: builder.query<SearchResponse, string>({
-      query: (artistName) =>
+    searchReleasesByArtist: builder.query<
+      SearchResponse,
+      { artistName: string; page?: number }
+    >({
+      query: ({ artistName, page = 1 }) =>
         `database/search?artist=${encodeURIComponent(
           artistName
-        )}&format=Vinyl&type=release&sort=year&sort_order=desc&page=1&per_page=100`,
+        )}&format=Vinyl&genre=Electronic&style=Techno&type=release&sort=year&sort_order=desc&page=${page}&per_page=100`,
     }),
   }),
 });

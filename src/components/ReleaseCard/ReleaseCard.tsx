@@ -1,145 +1,172 @@
-import { useEffect } from "react";
-import { ReleaseSummary, ReleaseDetails } from "../../types/release";
-import { Box, Card, CircularProgress, Link, Typography } from "@mui/material";
-import theme from "../../theme";
+import AlbumOutlinedIcon from "@mui/icons-material/AlbumOutlined";
+import {
+  Box,
+  Card,
+  CardActions,
+  CardContent,
+  CircularProgress,
+  Link,
+  Typography,
+} from "@mui/material";
+import { useState } from "react";
+import { useGetReleaseDetailsQuery } from "../../api/releasesApi";
+import { ReleaseSummary } from "../../types/release";
 
-const ReleaseCard = ({
-  release,
-  preloadDetails,
-  details,
-}: {
-  release: ReleaseSummary;
-  preloadDetails: () => void;
-  details?: ReleaseDetails;
-}) => {
-  useEffect(() => {
-    preloadDetails();
-  }, [preloadDetails]);
+const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
+  const {
+    currentData: details,
+    isLoading,
+    isError,
+    error,
+  } = useGetReleaseDetailsQuery(release.id);
+  const isRateLimited =
+    error !== undefined && "status" in error && error.status === 429;
 
-  const catnos = details?.labels?.map((label) => label.catno).filter(Boolean);
-  const priceFormatted = details?.lowest_price
-    ? new Intl.NumberFormat("de-DE", {
-        style: "currency",
-        currency: "EUR",
-      }).format(details.lowest_price)
-    : "Price N/A";
+  const catnos = Array.from(
+    new Set(details?.labels?.map((label) => label.catno).filter(Boolean))
+  );
+  const primaryImage = details?.images?.find(
+    (image) => image.type === "primary"
+  );
+  const artworkCandidates: (string | undefined)[] = [
+    release.cover_image,
+    release.thumb,
+    primaryImage?.uri,
+    primaryImage?.uri150,
+  ];
+  details?.images?.forEach((image) => {
+    if (image !== primaryImage) {
+      artworkCandidates.push(image.uri, image.uri150);
+    }
+  });
+  const artworkUrls = Array.from(
+    new Set(
+      artworkCandidates.filter((url): url is string => Boolean(url))
+    )
+  );
+  const [artworkIndex, setArtworkIndex] = useState(0);
+  const artworkUrl = artworkUrls[artworkIndex];
+  const priceFormatted =
+    details?.lowest_price != null && Number.isFinite(details.lowest_price)
+      ? new Intl.NumberFormat("de-DE", {
+          style: "currency",
+          currency: "EUR",
+        }).format(details.lowest_price)
+      : "Unavailable";
 
   return (
     <Card
       sx={{
         color: "text.primary",
-        borderRadius: 2,
-        height: 350,
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: 1,
+        minHeight: 280,
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        alignItems: "center",
-        padding: 2,
-        gap: 2,
-        transition: "transform 0.1s",
+        backgroundImage: "none",
+        transition: "border-color 0.15s, transform 0.15s",
         "&:hover": {
-          transform: "scale(1.02)",
+          borderColor: "primary.main",
+          transform: "translateY(-2px)",
         },
       }}
     >
-      <Box
-        sx={{
-          flexGrow: 1,
-          textAlign: "center",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "flex-start",
-          alignItems: "center",
-          width: "100%",
-        }}
+      <CardContent
+        sx={{ display: "flex", gap: 2, p: 2, "&:last-child": { pb: 2 } }}
       >
-        <img
-          src={release.cover_image}
-          alt={release.title}
-          style={{
-            width: 100,
-            height: 100,
-            borderRadius: "50%",
-            objectFit: "cover",
-            marginBottom: 20,
-            boxShadow: "0 0 8px #000",
-          }}
-        />
-
-        {/* Fixed-height title section */}
-        <Box
-          sx={{
-            height: 60,
-            overflow: "hidden",
-            mb: 1,
-            px: 1,
-          }}
-        >
+        {artworkUrl ? (
+          <Box
+            component="img"
+            src={artworkUrl}
+            alt={`Artwork for ${release.title}`}
+            loading="lazy"
+            onError={() => setArtworkIndex((index) => index + 1)}
+            sx={{
+              width: 72,
+              height: 72,
+              flex: "0 0 72px",
+              border: "1px solid",
+              borderColor: "divider",
+              objectFit: "cover",
+            }}
+          />
+        ) : (
+          <Box
+            aria-label="Artwork unavailable"
+            role="img"
+            sx={{
+              width: 72,
+              height: 72,
+              flex: "0 0 72px",
+              display: "grid",
+              placeItems: "center",
+              border: "1px solid",
+              borderColor: "divider",
+              color: "primary.main",
+              bgcolor: "background.default",
+            }}
+          >
+            <AlbumOutlinedIcon />
+          </Box>
+        )}
+        <Box sx={{ minWidth: 0 }}>
           <Typography
             variant="subtitle1"
             sx={{
-              lineHeight: 1.1,
+              lineHeight: 1.25,
               fontWeight: 800,
-              fontSize: 14,
             }}
             title={release.title}
           >
             {release.title}
           </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {release.year || "Year unavailable"}
+          </Typography>
         </Box>
+      </CardContent>
 
-        {/* Fixed-position content section */}
+      <CardContent sx={{ pt: 0, pb: 1, "&:last-child": { pb: 1 } }}>
+        <Typography variant="body2" color="text.secondary" noWrap>
+          {catnos?.length ? catnos.join(", ") : "Catalogue number unavailable"}
+        </Typography>
         <Box
-          sx={{
-            minHeight: 60,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 0.5,
-            mt: 2,
-          }}
+          sx={{ display: "flex", alignItems: "center", minHeight: 28, mt: 1 }}
         >
-          {details ? (
-            <>
-              <Typography variant="body2" sx={{ fontSize: 12 }}>
-                {catnos && catnos.length > 0
-                  ? `Cat No: ${catnos.join(", ")}`
-                  : "Cat No N/A"}
-              </Typography>
-              <Typography variant="subtitle2" sx={{ fontSize: 12 }}>
-                {release.year}
-              </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontSize: 12,
-                    fontWeight: 800,
-                    color: theme.palette.mode,
-                  }}
-                >
-                  Lowest price: {priceFormatted}
-                </Typography>
-              </Box>
-            </>
+          {isLoading ? (
+            <CircularProgress
+              size={15}
+              thickness={2}
+              aria-label="Loading Discogs lowest price"
+            />
           ) : (
-            <CircularProgress size={16} thickness={1} />
+            <Typography
+              variant="body2"
+              color={isError ? "text.secondary" : "primary.main"}
+            >
+              Discogs lowest price:{" "}
+              {isError
+                ? isRateLimited
+                  ? "Rate limit reached"
+                  : "Lookup failed"
+                : priceFormatted}
+            </Typography>
           )}
         </Box>
-      </Box>
-
-      <Box>
+      </CardContent>
+      <CardActions sx={{ px: 2, pb: 2 }}>
         <Link
           href={`https://www.discogs.com/release/${release.id}`}
           target="_blank"
           rel="noopener noreferrer"
           underline="hover"
-          sx={{ fontSize: 12 }}
+          sx={{ fontSize: 12, color: "primary.main" }}
         >
           View on Discogs
         </Link>
-      </Box>
+      </CardActions>
     </Card>
   );
 };
