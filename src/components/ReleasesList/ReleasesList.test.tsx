@@ -188,4 +188,21 @@ describe("ReleasesList", () => {
       ...Array.from({ length: 8 }, (_, i) => `Release ${i + 13}`),
     ]);
   });
+
+  it("says nothing was found only after the last Discogs page", () => {
+    const pages = discogsPages([{ techno: 0, mixed: 3 }, { techno: 0 }]);
+    let fetchedPages = 1;
+    mockUseGetTechnoVinylReleasesQuery.mockImplementation((args) =>
+      args.page <= fetchedPages
+        ? pages(args)
+        : { ...pages({ page: 1 }), currentData: undefined, isFetching: true }
+    );
+
+    const { rerender } = render(<ReleasesList />);
+    expect(screen.queryByText(/No exact Techno/)).not.toBeInTheDocument();
+
+    fetchedPages = 2;
+    rerender(<ReleasesList />);
+    expect(screen.getByText(/No exact Techno/)).toBeInTheDocument();
+  });
 });
