@@ -171,7 +171,11 @@ const ReleasesList = () => {
   const isRateLimited =
     error !== undefined && "status" in error && error.status === 429;
   const showEmpty =
-    !isLoading && !isFetching && !showError && filteredReleases.length === 0;
+    !isLoading &&
+    !isFetching &&
+    !showError &&
+    !hasMoreRemote &&
+    filteredReleases.length === 0;
 
   return (
     <StyledContainer ref={topRef}>
