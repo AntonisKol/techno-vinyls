@@ -117,7 +117,8 @@ const withHeaders = (response, extra) => {
 export default {
   fetch: (request, env, ctx) =>
     handle(request, env, {
-      fetch,
+      // Workers' fetch must not be called as a method of another object.
+      fetch: (url, init) => fetch(url, init),
       cache: caches.default,
       waitUntil: (promise) => ctx.waitUntil(promise),
     }),
