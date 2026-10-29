@@ -11,6 +11,7 @@ import ArtistSearch from "../ArtistSearch/ArtistSearch";
 import {
   StyledAppDescription,
   StyledButtonsContainer,
+  StyledCatalogueInfo,
   StyledContainer,
   StyledHeader,
   StyledReleaseGrid,
@@ -27,7 +28,6 @@ const ReleasesList = () => {
   );
   const [artistName, setArtistName] = useState<string | null>(null);
   const loadedPages = useRef(new Set<string>());
-  const topRef = useRef<HTMLDivElement>(null);
 
   const {
     currentData: technoData,
@@ -83,10 +83,6 @@ const ReleasesList = () => {
     setDisplayPage(totalPages);
   }, [displayPage, isFetching, totalPages]);
 
-  useEffect(() => {
-    topRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [displayPage]);
-
   const handleSearch = useCallback((name: string) => {
     loadedPages.current.clear();
     setArtistName(name);
@@ -122,13 +118,11 @@ const ReleasesList = () => {
 
   const canGoNext = displayPage < totalPages || rawPage < totalRemotePages;
   const showError = Boolean(error);
-  const isRateLimited =
-    error !== undefined && "status" in error && error.status === 429;
   const showEmpty =
     !isLoading && !isFetching && !showError && filteredReleases.length === 0;
 
   return (
-    <StyledContainer ref={topRef}>
+    <StyledContainer>
       <Typography
         component="p"
         sx={{
@@ -148,6 +142,14 @@ const ReleasesList = () => {
         compare catalogue details and current lowest listed prices, then open a
         release on Discogs.
       </StyledAppDescription>
+      {activeData && (
+        <StyledCatalogueInfo variant="caption">
+          Discogs reports{" "}
+          {new Intl.NumberFormat().format(activeData.pagination.items)} matching
+          candidates. Mixed-style releases are excluded, and browsing is capped
+          at the first 10,000 search results.
+        </StyledCatalogueInfo>
+      )}
 
       <ArtistSearch
         onSearch={handleSearch}
@@ -157,9 +159,7 @@ const ReleasesList = () => {
 
       {showError && (
         <StyledStatus role="alert">
-          {isRateLimited
-            ? "Discogs rate limit reached. Wait briefly or add a token to .env."
-            : "Could not load releases from Discogs. Check your connection and retry."}
+          Releases are temporarily unavailable. Please try again shortly.
           <Button onClick={handleRetry} size="small">
             Retry
           </Button>
@@ -197,7 +197,7 @@ const ReleasesList = () => {
             Previous
           </Button>
           <Typography variant="caption" color="text.secondary">
-            Page {displayPage} of {totalPages || "—"}
+            Page {displayPage}
           </Typography>
           <Button
             onClick={handleNextPage}

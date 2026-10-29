@@ -15,10 +15,12 @@ export const releasesApi = createApi({
     getTechnoVinylReleases: builder.query<SearchResponse, { page?: number }>({
       query: ({ page = 1 }) =>
         `database/search?format=Vinyl&genre=Electronic&style=Techno&type=release&sort=year&sort_order=desc&page=${page}&per_page=100`,
+      keepUnusedDataFor: 15 * 60,
     }),
 
     getReleaseDetails: builder.query<ReleaseDetails, number>({
       query: (id) => `releases/${id}`,
+      keepUnusedDataFor: 5 * 60,
     }),
 
     searchReleasesByArtist: builder.query<
@@ -29,6 +31,7 @@ export const releasesApi = createApi({
         `database/search?artist=${encodeURIComponent(
           artistName
         )}&format=Vinyl&genre=Electronic&style=Techno&type=release&sort=year&sort_order=desc&page=${page}&per_page=100`,
+      keepUnusedDataFor: 15 * 60,
     }),
   }),
 });

@@ -8,9 +8,23 @@ app.use(cors());
 
 const DISCOGS_TOKEN = process.env.DISCOGS_TOKEN;
 const PORT = process.env.PORT || 4000;
+const responseCache = new Map();
+const MAX_CACHE_ENTRIES = 500;
+const SEARCH_CACHE_TTL = 15 * 60 * 1000;
+const RELEASE_CACHE_TTL = 5 * 60 * 1000;
+
+const cacheDurationFor = (path) =>
+  path.startsWith("database/search") ? SEARCH_CACHE_TTL : RELEASE_CACHE_TTL;
 
 app.get("/api/discogs/*", async (req, res) => {
   const path = req.params[0];
+  const cacheKey = req.originalUrl;
+  const cached = responseCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return res.json(cached.data);
+  }
+  if (cached) responseCache.delete(cacheKey);
+
   const url = `https://api.discogs.com/${path}?${new URLSearchParams(
     req.query
   )}`;
@@ -43,6 +57,13 @@ app.get("/api/discogs/*", async (req, res) => {
     }
 
     if (!response.ok) return res.status(response.status).json(data);
+    if (responseCache.size >= MAX_CACHE_ENTRIES) {
+      responseCache.delete(responseCache.keys().next().value);
+    }
+    responseCache.set(cacheKey, {
+      data,
+      expiresAt: Date.now() + cacheDurationFor(path),
+    });
     res.json(data);
   } catch (err) {
     console.error("Proxy error:", err);

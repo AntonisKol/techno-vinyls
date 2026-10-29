@@ -3,22 +3,24 @@ import theme from "./theme";
 import ReleasesList from "./components/ReleasesList";
 
 const StyledApp = styled(Box)(() => ({
+  display: "flex",
+  flexDirection: "column",
   minHeight: "100vh",
 }));
 
 const StyledNavigation = styled("header")(({ theme }) => ({
   display: "flex",
-  width: "min(1200px, calc(100% - 32px))",
+  width: "min(1120px, calc(100% - 36px))",
   alignItems: "center",
   justifyContent: "space-between",
   gap: 24,
   margin: "0 auto",
   padding: "21px 0",
   borderBottom: `1px solid ${theme.palette.divider}`,
-  [theme.breakpoints.down("md")]: {
+  "@media (max-width: 760px)": {
     alignItems: "flex-start",
     flexDirection: "column",
-    gap: 16,
+    gap: 13,
   },
 }));
 
@@ -39,6 +41,11 @@ const StyledBrand = styled("a")(({ theme }) => ({
   "& g": {
     fill: "currentColor",
   },
+  "@media (max-width: 520px)": {
+    "& svg": {
+      width: 220,
+    },
+  },
 }));
 
 const StyledNavLinks = styled("nav")(({ theme }) => ({
@@ -46,8 +53,9 @@ const StyledNavLinks = styled("nav")(({ theme }) => ({
   flexWrap: "wrap",
   justifyContent: "flex-end",
   gap: "10px 18px",
-  fontFamily: "monospace",
+  fontFamily: '"Share Tech Mono", ui-monospace, monospace',
   fontSize: 12,
+  lineHeight: "normal",
   letterSpacing: ".07em",
   textTransform: "uppercase",
   "& a": {
@@ -61,12 +69,22 @@ const StyledNavLinks = styled("nav")(({ theme }) => ({
       outlineOffset: 4,
     },
   },
-  [theme.breakpoints.down("md")]: {
+  "@media (max-width: 760px)": {
     justifyContent: "flex-start",
   },
-  [theme.breakpoints.down("sm")]: {
+  "@media (max-width: 520px)": {
     gap: "8px 15px",
   },
+}));
+
+const StyledFooter = styled("footer")(({ theme }) => ({
+  width: "min(1120px, calc(100% - 36px))",
+  margin: "auto auto 0",
+  padding: "18px 0 24px",
+  borderTop: `1px solid ${theme.palette.divider}`,
+  color: theme.palette.text.secondary,
+  fontFamily: '"Share Tech Mono", ui-monospace, monospace',
+  fontSize: 10,
 }));
 
 const SiteNavigation = () => (
@@ -78,13 +96,13 @@ const SiteNavigation = () => (
           ADNS Audio
         </text>
         <g>
-          <rect x="225" y="22" width="2.5" height="7" rx="1.25" />
-          <rect x="231" y="18" width="2.5" height="15" rx="1.25" />
-          <rect x="237" y="13" width="2.5" height="25" rx="1.25" />
-          <rect x="243" y="20" width="2.5" height="11" rx="1.25" />
-          <rect x="249" y="15" width="2.5" height="21" rx="1.25" />
-          <rect x="255" y="20" width="2.5" height="11" rx="1.25" />
-          <rect x="261" y="22" width="2.5" height="7" rx="1.25" />
+          <rect x="217" y="22" width="2.5" height="7" rx="1.25" />
+          <rect x="223" y="18" width="2.5" height="15" rx="1.25" />
+          <rect x="229" y="13" width="2.5" height="25" rx="1.25" />
+          <rect x="235" y="20" width="2.5" height="11" rx="1.25" />
+          <rect x="241" y="15" width="2.5" height="21" rx="1.25" />
+          <rect x="247" y="20" width="2.5" height="11" rx="1.25" />
+          <rect x="253" y="22" width="2.5" height="7" rx="1.25" />
         </g>
       </svg>
     </StyledBrand>
@@ -105,7 +123,8 @@ const App = () => {
       <CssBaseline />
       <StyledApp>
         <SiteNavigation />
-      <ReleasesList />
+        <ReleasesList />
+        <StyledFooter>© Antonios Kolovos. All rights reserved.</StyledFooter>
       </StyledApp>
     </ThemeProvider>
   );

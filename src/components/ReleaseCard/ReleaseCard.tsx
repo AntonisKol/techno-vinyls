@@ -17,10 +17,7 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
     currentData: details,
     isLoading,
     isError,
-    error,
   } = useGetReleaseDetailsQuery(release.id);
-  const isRateLimited =
-    error !== undefined && "status" in error && error.status === 429;
 
   const catnos = Array.from(
     new Set(details?.labels?.map((label) => label.catno).filter(Boolean))
@@ -147,11 +144,7 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
               color={isError ? "text.secondary" : "primary.main"}
             >
               Discogs lowest price:{" "}
-              {isError
-                ? isRateLimited
-                  ? "Rate limit reached"
-                  : "Lookup failed"
-                : priceFormatted}
+              {isError ? "Temporarily unavailable" : priceFormatted}
             </Typography>
           )}
         </Box>

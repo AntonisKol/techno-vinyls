@@ -57,7 +57,7 @@ describe("ReleaseCard", () => {
       .toBeInTheDocument();
   });
 
-  it("distinguishes a failed price lookup from an unavailable listing", () => {
+  it("shows a friendly message when a price lookup is temporarily unavailable", () => {
     mockUseGetReleaseDetailsQuery.mockReturnValue({
       currentData: undefined,
       isLoading: false,
@@ -67,8 +67,9 @@ describe("ReleaseCard", () => {
 
     render(<ReleaseCard release={release} />);
 
-    expect(screen.getByText("Discogs lowest price: Rate limit reached"))
+    expect(screen.getByText("Discogs lowest price: Temporarily unavailable"))
       .toBeInTheDocument();
+    expect(screen.queryByText(/rate limit/i)).not.toBeInTheDocument();
   });
 
   it("tries other Discogs artwork before showing the fallback", () => {

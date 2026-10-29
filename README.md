@@ -16,8 +16,16 @@ with `npm start`:
 - Discogs proxy: <http://localhost:4000>
 
 The artist search starts after two characters. Results are filtered to remove
-cross-genre styles, shown ten at a time, and can be loaded across additional
-Discogs pages.
+cross-genre styles, shown twelve at a time, and can be browsed across Discogs
+search pages. The page indicator shows the current app page; Discogs' total
+search count includes mixed-style results that this app filters out. Discogs
+allows browsing at most 100 pages (10,000 results) per query, even when its
+reported match count is larger.
+
+The proxy caches search results for 15 minutes and release details for 5 minutes
+to reduce repeated Discogs requests. For a hosted deployment, keep the optional
+`DISCOGS_TOKEN` on the server that runs the proxy; never expose it in browser
+code or a static site's public environment.
 
 ## Verify
 

@@ -14,4 +14,5 @@ test('renders the Techno Vinyls app', () => {
     "aria-current",
     "page"
   );
+  expect(screen.getByText("© Antonios Kolovos. All rights reserved.")).toBeInTheDocument();
 });

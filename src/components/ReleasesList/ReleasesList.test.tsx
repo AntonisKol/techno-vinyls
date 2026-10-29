@@ -40,18 +40,19 @@ describe("ReleasesList", () => {
     });
   });
 
-  it("explains how to recover from a Discogs rate limit", () => {
+  it("shows a user-friendly message when release data is temporarily unavailable", () => {
     render(<ReleasesList />);
 
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Discogs rate limit reached. Wait briefly or add a token to .env."
+      "Releases are temporarily unavailable. Please try again shortly."
     );
+    expect(screen.getByRole("alert")).not.toHaveTextContent(/rate limit|\.env|token/i);
   });
 
   it("shows 12 releases per page with visible previous and next controls", async () => {
     mockUseGetTechnoVinylReleasesQuery.mockReturnValue({
       currentData: {
-        pagination: { page: 1, pages: 1, per_page: 100, items: 13 },
+        pagination: { page: 1, pages: 100, per_page: 100, items: 183350 },
         results: Array.from({ length: 13 }, (_, index) => ({
           id: index + 1,
           title: `Release ${index + 1}`,
@@ -72,6 +73,7 @@ describe("ReleasesList", () => {
     await waitFor(() => {
       expect(screen.getAllByTestId("release-card")).toHaveLength(12);
     });
+    expect(screen.getByText(/183,350 matching candidates/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Previous" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Next" })).toBeEnabled();
 
@@ -80,8 +82,10 @@ describe("ReleasesList", () => {
     await waitFor(() => {
       expect(screen.getAllByTestId("release-card")).toHaveLength(1);
     });
-    expect(screen.getByText("Page 2 of 2")).toBeInTheDocument();
+    expect(HTMLElement.prototype.scrollIntoView).not.toHaveBeenCalled();
+    expect(screen.getByText("Page 2")).toBeInTheDocument();
+    expect(screen.queryByText(/of 2/)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Previous" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Next" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Next" })).toBeEnabled();
   });
 });
