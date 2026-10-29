@@ -32,27 +32,18 @@ ignores. Never put it in browser code.
 ## Test
 
 ```sh
-CI=true npm test -- --watchAll=false --runInBand   # the app (Jest)
-npm run test:worker                                 # the hosted proxy (node:test)
+CI=true npm test -- --watchAll=false --runInBand
 npm run build
 ```
 
 ## How it is hosted
 
-- **App:** `npm run build:site` builds for `/techno-vinyls/app/` with the API
-  address `https://api.adnsaudio.com/api/discogs/`. The build is published with
-  the ADNS Audio website.
-- **Proxy:** [`worker/proxy.mjs`](worker/proxy.mjs) is a Cloudflare Worker at
-  `api.adnsaudio.com`. It forwards only the two Discogs reads the app makes
-  (search and release details), adds the token from a Worker secret, caches
-  results (search 15 minutes, releases 5 minutes) and answers browsers only
-  from adnsaudio.com and localhost.
-
-```sh
-npx wrangler login
-npx wrangler secret put DISCOGS_TOKEN --config worker/wrangler.toml
-npm run deploy:worker
-```
+`npm run build:site` builds for `/techno-vinyls/app/` and copies nothing
+secret: the hosted app calls the Discogs API straight from the visitor's
+browser, without a token. Discogs limits requests by IP address, so every
+visitor gets their own limit (25 a minute) instead of sharing one. A proxy on
+shared cloud addresses was tried and dropped: other users of those addresses
+used up the limit. The build is published with the ADNS Audio website.
 
 ## Built with
 
