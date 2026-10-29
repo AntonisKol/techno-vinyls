@@ -17,7 +17,7 @@ import {
   StyledStatus,
 } from "./styled";
 
-const RELEASES_PER_PAGE = 10;
+const RELEASES_PER_PAGE = 12;
 
 const ReleasesList = () => {
   const [displayPage, setDisplayPage] = useState(1);
@@ -203,7 +203,7 @@ const ReleasesList = () => {
             onClick={handleNextPage}
             disabled={!canGoNext || isFetching}
           >
-            {displayPage < totalPages ? "Next" : "Load more"}
+            Next
           </Button>
         </StyledButtonsContainer>
       )}

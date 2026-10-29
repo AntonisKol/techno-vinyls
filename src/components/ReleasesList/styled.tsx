@@ -4,7 +4,7 @@ export const StyledContainer = styled(Box)(() => ({
   width: "min(1200px, calc(100% - 32px))",
   minHeight: "100vh",
   margin: "0 auto",
-  padding: "clamp(28px, 6vw, 72px) 0",
+  padding: "clamp(28px, 6vw, 72px) 0 clamp(56px, 8vw, 96px)",
 }));
 
 export const StyledHeader = styled(Typography)(() => ({
@@ -30,6 +30,7 @@ export const StyledReleaseGrid = styled(Box)(() => ({
   gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))",
   gap: 12,
   marginTop: 24,
+  marginBottom: 24,
 }));
 
 export const StyledButtonsContainer = styled(Box)(() => ({
