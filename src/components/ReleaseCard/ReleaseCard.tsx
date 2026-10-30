@@ -9,16 +9,20 @@ import {
   Typography,
 } from "@mui/material";
 import { useState } from "react";
-import { useGetReleaseDetailsQuery } from "../../api/releasesApi";
+import {
+  useGetMarketplaceStatsQuery,
+  useGetReleaseDetailsQuery,
+} from "../../api/releasesApi";
 import { ReleaseSummary } from "../../types/release";
 import { cardDetails, cardFrame, TITLE_LINES } from "./cardFrame";
 
 const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
+  const { currentData: details } = useGetReleaseDetailsQuery(release.id);
   const {
-    currentData: details,
+    currentData: stats,
     isLoading,
     isError,
-  } = useGetReleaseDetailsQuery(release.id);
+  } = useGetMarketplaceStatsQuery(release.id);
 
   // The search result's catalogue number shows until the details arrive.
   const catnos = Array.from(
@@ -47,12 +51,15 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
   );
   const [artworkIndex, setArtworkIndex] = useState(0);
   const artworkUrl = artworkUrls[artworkIndex];
+  const lowestPrice = stats?.lowest_price;
+  const hasPrice =
+    !isLoading && !isError && Number.isFinite(lowestPrice?.value);
   const priceFormatted =
-    details?.lowest_price != null && Number.isFinite(details.lowest_price)
+    lowestPrice && hasPrice
       ? new Intl.NumberFormat("de-DE", {
           style: "currency",
-          currency: "EUR",
-        }).format(details.lowest_price)
+          currency: lowestPrice.currency || "EUR",
+        }).format(lowestPrice.value)
       : "Unavailable";
 
   return (
@@ -151,7 +158,9 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
           )}
         </Box>
       </CardContent>
-      <CardActions sx={{ px: 2, pb: 2 }}>
+      <CardActions
+        sx={{ px: 2, pb: 2, justifyContent: "space-between", gap: 1 }}
+      >
         <Link
           href={`https://www.discogs.com/release/${release.id}`}
           target="_blank"
@@ -161,6 +170,16 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
         >
           View on Discogs
         </Link>
+        {/* Discogs' site shows shipping on top of the listing price. */}
+        {hasPrice && (
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ lineHeight: 1.5 }}
+          >
+            excl. shipping
+          </Typography>
+        )}
       </CardActions>
     </Card>
   );
