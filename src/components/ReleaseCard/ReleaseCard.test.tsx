@@ -46,14 +46,20 @@ describe("ReleaseCard", () => {
     });
   });
 
-  it("shows Discogs' lowest price and artwork from release details", () => {
+  it("shows the cheapest copy for sale and artwork from release details", () => {
     render(<ReleaseCard release={release} />);
 
     expect(mockUseGetMarketplaceStatsQuery).toHaveBeenCalledWith(123);
     expect(
-      screen.getByText("Discogs lowest price: 18,50 €")
+      screen.getByText("Cheapest for sale now: 18,50 €")
     ).toBeInTheDocument();
     expect(screen.getByText("excl. shipping")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "View on Discogs" })
+    ).toHaveAttribute(
+      "href",
+      "https://www.discogs.com/sell/release/123?sort=price%2Casc"
+    );
     expect(
       screen.getByRole("img", { name: "Artwork for Test release" })
     ).toHaveAttribute("src", "https://images.example/cover.jpg");
@@ -69,7 +75,7 @@ describe("ReleaseCard", () => {
     render(<ReleaseCard release={release} />);
 
     expect(
-      screen.getByText("Discogs lowest price: 16,67 $")
+      screen.getByText("Cheapest for sale now: 16,67 $")
     ).toBeInTheDocument();
   });
 
@@ -84,7 +90,7 @@ describe("ReleaseCard", () => {
     render(<ReleaseCard release={release} />);
 
     expect(
-      screen.getByText("Discogs lowest price: Unavailable")
+      screen.getByText("Cheapest for sale now: Unavailable")
     ).toBeInTheDocument();
     expect(screen.queryByText("excl. shipping")).not.toBeInTheDocument();
   });
@@ -100,7 +106,7 @@ describe("ReleaseCard", () => {
     render(<ReleaseCard release={release} />);
 
     expect(
-      screen.getByText("Discogs lowest price: Temporarily unavailable")
+      screen.getByText("Cheapest for sale now: Temporarily unavailable")
     ).toBeInTheDocument();
     expect(screen.queryByText(/rate limit/i)).not.toBeInTheDocument();
   });
@@ -138,7 +144,7 @@ describe("ReleaseCard", () => {
 
     expect(screen.getByText("TAR040")).toBeInTheDocument();
     expect(
-      screen.getByLabelText("Loading Discogs lowest price")
+      screen.getByLabelText("Loading cheapest price for sale")
     ).toBeInTheDocument();
   });
 });

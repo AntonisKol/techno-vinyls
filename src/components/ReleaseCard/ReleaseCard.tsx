@@ -145,14 +145,14 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
               animation="wave"
               width={170}
               height={28}
-              aria-label="Loading Discogs lowest price"
+              aria-label="Loading cheapest price for sale"
             />
           ) : (
             <Typography
               variant="body2"
               color={isError ? "text.secondary" : "primary.main"}
             >
-              Discogs lowest price:{" "}
+              Cheapest for sale now:{" "}
               {isError ? "Temporarily unavailable" : priceFormatted}
             </Typography>
           )}
@@ -161,8 +161,10 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
       <CardActions
         sx={{ px: 2, pb: 2, justifyContent: "space-between", gap: 1 }}
       >
+        {/* The release's listings, cheapest first: the top one is the price above.
+            The release page itself only shows past sales (Low / Median / High). */}
         <Link
-          href={`https://www.discogs.com/release/${release.id}`}
+          href={`https://www.discogs.com/sell/release/${release.id}?sort=price%2Casc`}
           target="_blank"
           rel="noopener noreferrer"
           underline="hover"
