@@ -238,17 +238,6 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
         another style, such as Techno and House, are left out. Artist search
         uses the same filter. Prices are the cheapest copy for sale now, excl.
         shipping.
-        {pagination && (
-          <span data-testid="filter-counts">
-            {" "}
-            {filteredReleases.length.toLocaleString("en")} found in the first{" "}
-            {checkedResults.toLocaleString("en")} of{" "}
-            {pagination.items.toLocaleString("en")} Discogs results
-            {pagination.items > DISCOGS_MAX_RESULTS
-              ? " (Discogs search reaches the newest 10,000)."
-              : "."}
-          </span>
-        )}
       </StyledFilterNote>
 
       <ArtistSearch

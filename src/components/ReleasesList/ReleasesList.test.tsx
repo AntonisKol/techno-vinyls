@@ -123,9 +123,6 @@ describe("ReleasesList", () => {
     await waitFor(() => {
       expect(screen.getAllByTestId("release")).toHaveLength(12);
     });
-    expect(screen.getByTestId("filter-counts")).toHaveTextContent(
-      "13 found in the first 100 of 183,350 Discogs results"
-    );
     expect(screen.getByRole("button", { name: "Previous" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Next" })).toBeEnabled();
 
@@ -141,7 +138,7 @@ describe("ReleasesList", () => {
     expect(screen.getByRole("button", { name: "Next" })).toBeEnabled();
   });
 
-  it("says what the list is filtered to and how much of Discogs was checked", () => {
+  it("says what the list is filtered to, without result counts", () => {
     mockUseGetTechnoVinylReleasesQuery.mockImplementation(
       discogsPages([{ techno: 28, mixed: 72 }, { techno: 30 }])
     );
@@ -154,9 +151,7 @@ describe("ReleasesList", () => {
         /Prices are the cheapest copy for sale now, excl\. shipping\./
       )
     ).toBeInTheDocument();
-    expect(screen.getByTestId("filter-counts")).toHaveTextContent(
-      "28 found in the first 100 of 200 Discogs results."
-    );
+    expect(screen.queryByText(/Discogs results/)).not.toBeInTheDocument();
   });
 
   it("keeps paging past the first Discogs page with Next", () => {
