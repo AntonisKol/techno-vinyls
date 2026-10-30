@@ -238,6 +238,11 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
         another style, such as Techno and House, are left out. Artist search
         uses the same filter. Prices are the cheapest copy for sale now, excl.
         shipping.
+        <Box component="span" sx={{ display: "block", mt: 0.5, fontSize: 12 }}>
+          (Data comes straight from Discogs, which limits how fast each visitor
+          can load it, so some prices and dates can take a minute or two to
+          appear.)
+        </Box>
       </StyledFilterNote>
 
       <ArtistSearch
