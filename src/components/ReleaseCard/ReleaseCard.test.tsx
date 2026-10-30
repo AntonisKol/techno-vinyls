@@ -130,6 +130,21 @@ describe("ReleaseCard", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows the full release date from the details", () => {
+    mockUseGetReleaseDetailsQuery.mockReturnValue({
+      currentData: {
+        released_formatted: "07 Aug 2026",
+        images: [],
+        labels: [],
+      },
+    });
+
+    render(<ReleaseCard release={release} />);
+
+    expect(screen.getByText("07 Aug 2026")).toBeInTheDocument();
+    expect(screen.queryByText("2026")).not.toBeInTheDocument();
+  });
+
   it("shows the search result's catalogue number while the details load", () => {
     mockUseGetReleaseDetailsQuery.mockReturnValue({ currentData: undefined });
     mockUseGetMarketplaceStatsQuery.mockReturnValue({
@@ -142,6 +157,7 @@ describe("ReleaseCard", () => {
     render(<ReleaseCard release={{ ...release, catno: "TAR040" }} />);
 
     expect(screen.getByText("TAR040")).toBeInTheDocument();
+    expect(screen.getByText("2026")).toBeInTheDocument();
     expect(
       screen.getByLabelText("Loading cheapest price for sale")
     ).toBeInTheDocument();

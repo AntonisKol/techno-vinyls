@@ -128,7 +128,8 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
             {release.title}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            {release.year || "Year unavailable"}
+            {/* The search result's year shows until the details arrive. */}
+            {details?.released_formatted || release.year || "Year unavailable"}
           </Typography>
         </Box>
       </CardContent>

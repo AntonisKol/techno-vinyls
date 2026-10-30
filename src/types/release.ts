@@ -15,6 +15,9 @@ export interface ReleaseSummary {
 export type ReleaseDetails = ReleaseSummary & {
   labels?: { name: string; catno: string }[];
   images?: { type?: string; uri?: string; uri150?: string }[];
+  // Discogs' own date text: "07 Aug 2026", or "Jan 2026" / "2026" when the
+  // day or month isn't known.
+  released_formatted?: string;
 };
 
 // marketplace/stats/{id}: lowest_price is null when nothing is for sale.
