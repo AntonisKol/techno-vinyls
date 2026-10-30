@@ -53,7 +53,7 @@ describe("ReleaseCard", () => {
     expect(
       screen.getByText("Cheapest for sale now: 18,50 €")
     ).toBeInTheDocument();
-    expect(screen.getByText("excl. shipping")).toBeInTheDocument();
+    expect(screen.queryByText(/shipping/)).not.toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "View on Discogs" })
     ).toHaveAttribute(
@@ -92,7 +92,6 @@ describe("ReleaseCard", () => {
     expect(
       screen.getByText("Cheapest for sale now: Unavailable")
     ).toBeInTheDocument();
-    expect(screen.queryByText("excl. shipping")).not.toBeInTheDocument();
   });
 
   it("shows a friendly message when a price lookup is temporarily unavailable", () => {
