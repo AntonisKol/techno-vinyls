@@ -149,6 +149,11 @@ describe("ReleasesList", () => {
     render(<ReleasesList />);
 
     expect(screen.getByText(/whose only style is Techno/)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Prices are the cheapest copy for sale now, excl\. shipping\./
+      )
+    ).toBeInTheDocument();
     expect(screen.getByTestId("filter-counts")).toHaveTextContent(
       "28 found in the first 100 of 200 Discogs results."
     );

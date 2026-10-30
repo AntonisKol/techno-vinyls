@@ -236,7 +236,8 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
         <strong>What you see:</strong> vinyl releases in Discogs' Electronic
         genre whose only style is Techno, newest first. Releases that also carry
         another style, such as Techno and House, are left out. Artist search
-        uses the same filter.
+        uses the same filter. Prices are the cheapest copy for sale now, excl.
+        shipping.
         {pagination && (
           <span data-testid="filter-counts">
             {" "}

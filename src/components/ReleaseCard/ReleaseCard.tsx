@@ -158,9 +158,7 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
           )}
         </Box>
       </CardContent>
-      <CardActions
-        sx={{ px: 2, pb: 2, justifyContent: "space-between", gap: 1 }}
-      >
+      <CardActions sx={{ px: 2, pb: 2 }}>
         {/* The release's listings, cheapest first: the top one is the price above.
             The release page itself only shows past sales (Low / Median / High). */}
         <Link
@@ -172,16 +170,6 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
         >
           View on Discogs
         </Link>
-        {/* Discogs' site shows shipping on top of the listing price. */}
-        {hasPrice && (
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ lineHeight: 1.5 }}
-          >
-            excl. shipping
-          </Typography>
-        )}
       </CardActions>
     </Card>
   );
