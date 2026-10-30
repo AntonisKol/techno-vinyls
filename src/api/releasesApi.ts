@@ -6,6 +6,7 @@ import {
 } from "../types/release";
 import { apiBase, LOCAL_API_BASE } from "./apiBase";
 import { createRateLimiter } from "./rateLimiter";
+import { storedBaseQuery } from "./storedBaseQuery";
 import { throttledBaseQuery } from "./throttledBaseQuery";
 
 interface SearchResponse {
@@ -27,7 +28,9 @@ const limiter = createRateLimiter({
 
 export const releasesApi = createApi({
   reducerPath: "releasesApi",
-  baseQuery: throttledBaseQuery(limiter, fetchBaseQuery({ baseUrl: base })),
+  baseQuery: storedBaseQuery(
+    throttledBaseQuery(limiter, fetchBaseQuery({ baseUrl: base }))
+  ),
   endpoints: (builder) => ({
     getTechnoVinylReleases: builder.query<SearchResponse, { page?: number }>({
       query: ({ page = 1 }) =>

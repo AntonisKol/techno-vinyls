@@ -54,6 +54,7 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
   const lowestPrice = stats?.lowest_price;
   const hasPrice =
     !isLoading && !isError && Number.isFinite(lowestPrice?.value);
+  const copiesForSale = stats?.num_for_sale ?? 0;
   const priceFormatted =
     lowestPrice && hasPrice
       ? new Intl.NumberFormat("de-DE", {
@@ -159,7 +160,9 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
           )}
         </Box>
       </CardContent>
-      <CardActions sx={{ px: 2, pb: 2 }}>
+      <CardActions
+        sx={{ px: 2, pb: 2, justifyContent: "space-between", gap: 1 }}
+      >
         {/* The release's listings, cheapest first: the top one is the price above.
             The release page itself only shows past sales (Low / Median / High). */}
         <Link
@@ -171,6 +174,15 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
         >
           View on Discogs
         </Link>
+        {hasPrice && copiesForSale > 0 && (
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ lineHeight: 1.5 }}
+          >
+            {copiesForSale.toLocaleString("de-DE")} for sale
+          </Typography>
+        )}
       </CardActions>
     </Card>
   );
