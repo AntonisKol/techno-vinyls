@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Button, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import ReleaseCard from "../ReleaseCard";
+import ReleaseCardSkeleton from "../ReleaseCardSkeleton/ReleaseCardSkeleton";
 import {
   useGetTechnoVinylReleasesQuery,
   useSearchReleasesByArtistQuery,
@@ -12,22 +13,44 @@ import {
   StyledAppDescription,
   StyledButtonsContainer,
   StyledContainer,
+  StyledFilterNote,
   StyledHeader,
   StyledReleaseGrid,
   StyledStatus,
 } from "./styled";
 
-const RELEASES_PER_PAGE = 10;
+const RELEASES_PER_PAGE = 12;
 
-const ReleasesList = () => {
+// Read by screen readers, not shown: the skeletons show it on screen.
+const visuallyHidden = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  overflow: "hidden",
+  clip: "rect(0 0 0 0)",
+  whiteSpace: "nowrap",
+} as const;
+// Discogs search stops at page 100 of 100 results, whatever the total.
+const DISCOGS_MAX_RESULTS = 10000;
+
+interface Pagination {
+  page: number;
+  pages: number;
+  perPage: number;
+  items: number;
+}
+
+// embedded: rendered inside a page that has its own heading and layout
+// (the Techno Vinyls page on adnsaudio.com), so only the list is shown.
+const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
   const [displayPage, setDisplayPage] = useState(1);
   const [rawPage, setRawPage] = useState(1);
   const [filteredReleases, setFilteredReleases] = useState<ReleaseSummary[]>(
     []
   );
   const [artistName, setArtistName] = useState<string | null>(null);
+  const [pagination, setPagination] = useState<Pagination | null>(null);
   const loadedPages = useRef(new Set<string>());
-  const topRef = useRef<HTMLDivElement>(null);
 
   const {
     currentData: technoData,
@@ -55,7 +78,7 @@ const ReleasesList = () => {
   const isLoading = artistName === null ? technoLoading : artistLoading;
   const isFetching = artistName === null ? technoFetching : artistFetching;
   const error = artistName === null ? technoError : artistError;
-  const totalRemotePages = activeData?.pagination.pages ?? 0;
+  const totalRemotePages = pagination?.pages ?? 0;
 
   useEffect(() => {
     if (!activeData) return;
@@ -63,13 +86,23 @@ const ReleasesList = () => {
     const requestKey = `${artistName ?? "all"}:${activeData.pagination.page}`;
     if (loadedPages.current.has(requestKey)) return;
     loadedPages.current.add(requestKey);
+    setPagination({
+      page: activeData.pagination.page,
+      pages: activeData.pagination.pages,
+      perPage: activeData.pagination.per_page,
+      items: activeData.pagination.items,
+    });
 
     const technoOnly = filterStrictlyTechnoReleases(activeData.results);
-    setFilteredReleases((previous) =>
-      activeData.pagination.page === 1
-        ? technoOnly
-        : [...previous, ...technoOnly]
-    );
+    setFilteredReleases((previous) => {
+      if (activeData.pagination.page === 1) return technoOnly;
+      // Discogs sorts by year only, so a release can show up on two pages.
+      const seen = new Set(previous.map((release) => release.id));
+      return [
+        ...previous,
+        ...technoOnly.filter((release) => !seen.has(release.id)),
+      ];
+    });
   }, [activeData, artistName]);
 
   const totalPages = Math.ceil(filteredReleases.length / RELEASES_PER_PAGE);
@@ -78,14 +111,32 @@ const ReleasesList = () => {
     displayPage * RELEASES_PER_PAGE
   );
 
+  const hasMoreRemote = rawPage < totalRemotePages;
+  // Set together with filteredReleases, so the page's matches are counted.
+  const rawPageProcessed = pagination?.page === rawPage;
+
+  // Keep the next page loaded as well, so pages stay full and Next is instant.
+  // Discogs pages without an exact Techno match are skipped by loading the
+  // following page straight away.
   useEffect(() => {
-    if (isFetching || displayPage <= totalPages || totalPages === 0) return;
-    setDisplayPage(totalPages);
-  }, [displayPage, isFetching, totalPages]);
+    if (isFetching || error || !rawPageProcessed || !hasMoreRemote) return;
+    if (filteredReleases.length > (displayPage + 1) * RELEASES_PER_PAGE) return;
+    setRawPage((page) => page + 1);
+  }, [
+    displayPage,
+    error,
+    filteredReleases.length,
+    hasMoreRemote,
+    isFetching,
+    pagination,
+    rawPageProcessed,
+  ]);
 
   useEffect(() => {
-    topRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [displayPage]);
+    if (isFetching || hasMoreRemote) return;
+    if (displayPage <= totalPages || totalPages === 0) return;
+    setDisplayPage(totalPages);
+  }, [displayPage, hasMoreRemote, isFetching, totalPages]);
 
   const handleSearch = useCallback((name: string) => {
     loadedPages.current.clear();
@@ -93,6 +144,7 @@ const ReleasesList = () => {
     setRawPage(1);
     setDisplayPage(1);
     setFilteredReleases([]);
+    setPagination(null);
   }, []);
 
   const handleResetSearch = useCallback(() => {
@@ -101,18 +153,16 @@ const ReleasesList = () => {
     setRawPage(1);
     setDisplayPage(1);
     setFilteredReleases([]);
+    setPagination(null);
   }, []);
 
-  const handleNextPage = () => {
-    if (isFetching) return;
-    if (displayPage < totalPages) {
-      setDisplayPage((page) => page + 1);
-      return;
-    }
+  const canGoNext = displayPage < totalPages || hasMoreRemote;
 
-    if (rawPage < totalRemotePages) {
-      setRawPage((page) => page + 1);
-    }
+  const handleNextPage = () => {
+    // Paging stays possible while the next Discogs page loads in the
+    // background; skeletons fill the page until its releases arrive.
+    if (!canGoNext) return;
+    setDisplayPage((page) => page + 1);
   };
 
   const handleRetry = () => {
@@ -120,34 +170,85 @@ const ReleasesList = () => {
     else refetchArtist();
   };
 
-  const canGoNext = displayPage < totalPages || rawPage < totalRemotePages;
+  const checkedResults = pagination
+    ? Math.min(
+        pagination.page * pagination.perPage,
+        pagination.items,
+        DISCOGS_MAX_RESULTS
+      )
+    : 0;
+  // Pages to expect: the share of exact matches so far, applied to the
+  // results Discogs search can reach.
+  const reachable = pagination
+    ? Math.min(pagination.items, DISCOGS_MAX_RESULTS)
+    : 0;
+  const estimatedPages =
+    checkedResults > 0
+      ? Math.ceil(
+          ((filteredReleases.length / checkedResults) * reachable) /
+            RELEASES_PER_PAGE
+        )
+      : 0;
   const showError = Boolean(error);
-  const isRateLimited =
-    error !== undefined && "status" in error && error.status === 429;
+  // Skeleton cards fill the page's empty slots while releases are loading.
+  const skeletons =
+    (isLoading || isFetching) && !showError
+      ? RELEASES_PER_PAGE - currentPageReleases.length
+      : 0;
   const showEmpty =
-    !isLoading && !isFetching && !showError && filteredReleases.length === 0;
+    !isLoading &&
+    !isFetching &&
+    !showError &&
+    !hasMoreRemote &&
+    filteredReleases.length === 0;
+
+  const Container = embedded ? Box : StyledContainer;
 
   return (
-    <StyledContainer ref={topRef}>
-      <Typography
-        component="p"
-        sx={{
-          color: "primary.main",
-          fontSize: 11,
-          fontFamily: "monospace",
-          letterSpacing: ".12em",
-          textTransform: "uppercase",
-          mb: 1,
-        }}
-      >
-        Record discovery · Discogs
-      </Typography>
-      <StyledHeader variant="h1">Techno Vinyls</StyledHeader>
-      <StyledAppDescription>
-        Browse vinyl releases tagged exclusively as Techno, search by artist,
-        compare catalogue details and current lowest listed prices, then open a
-        release on Discogs.
-      </StyledAppDescription>
+    <Container>
+      {!embedded && (
+        <>
+          <Typography
+            component="p"
+            sx={{
+              color: "primary.main",
+              fontSize: 11,
+              fontFamily: '"Share Tech Mono", ui-monospace, monospace',
+              // Same eyebrow as adnsaudio.com, so the h1 starts at the same height.
+              lineHeight: "normal",
+              letterSpacing: ".16em",
+              textTransform: "uppercase",
+              mb: "14px",
+            }}
+          >
+            Record discovery · Discogs
+          </Typography>
+          <StyledHeader variant="h1">Techno Vinyls</StyledHeader>
+          <StyledAppDescription>
+            Browse vinyl releases tagged exclusively as Techno, search by
+            artist, compare catalogue details and current lowest listed prices,
+            then open a release on Discogs.
+          </StyledAppDescription>
+        </>
+      )}
+
+      <StyledFilterNote sx={embedded ? { mt: 0, pl: 0 } : undefined}>
+        <strong>What you see:</strong> vinyl releases in Discogs' Electronic
+        genre whose only style is Techno, newest first. Releases that also carry
+        another style, such as Techno and House, are left out. Artist search
+        uses the same filter.
+        {pagination && (
+          <span data-testid="filter-counts">
+            {" "}
+            {filteredReleases.length.toLocaleString("en")} found in the first{" "}
+            {checkedResults.toLocaleString("en")} of{" "}
+            {pagination.items.toLocaleString("en")} Discogs results
+            {pagination.items > DISCOGS_MAX_RESULTS
+              ? " (Discogs search reaches the newest 10,000)."
+              : "."}
+          </span>
+        )}
+      </StyledFilterNote>
 
       <ArtistSearch
         onSearch={handleSearch}
@@ -157,9 +258,7 @@ const ReleasesList = () => {
 
       {showError && (
         <StyledStatus role="alert">
-          {isRateLimited
-            ? "Discogs rate limit reached. Wait briefly or add a token to .env."
-            : "Could not load releases from Discogs. Check your connection and retry."}
+          Releases are temporarily unavailable. Please try again shortly.
           <Button onClick={handleRetry} size="small">
             Retry
           </Button>
@@ -167,11 +266,11 @@ const ReleasesList = () => {
       )}
 
       {isFetching && (
-        <StyledStatus role="status">
+        <Box role="status" sx={visuallyHidden}>
           {filteredReleases.length > 0
             ? "Loading more releases…"
             : "Loading releases…"}
-        </StyledStatus>
+        </Box>
       )}
 
       {showEmpty && (
@@ -180,34 +279,38 @@ const ReleasesList = () => {
         </StyledStatus>
       )}
 
-      {currentPageReleases.length > 0 && (
-        <StyledReleaseGrid>
+      {currentPageReleases.length + skeletons > 0 && (
+        <StyledReleaseGrid aria-busy={skeletons > 0}>
           {currentPageReleases.map((release) => (
             <ReleaseCard release={release} key={release.id} />
+          ))}
+          {Array.from({ length: skeletons }, (_, index) => (
+            <ReleaseCardSkeleton key={`skeleton-${index}`} />
           ))}
         </StyledReleaseGrid>
       )}
 
-      {(filteredReleases.length > 0 || rawPage < totalRemotePages) && (
+      {(filteredReleases.length > 0 || hasMoreRemote) && (
         <StyledButtonsContainer>
           <Button
             onClick={() => setDisplayPage((page) => Math.max(1, page - 1))}
-            disabled={displayPage === 1 || isFetching}
+            disabled={displayPage === 1}
           >
             Previous
           </Button>
           <Typography variant="caption" color="text.secondary">
-            Page {displayPage} of {totalPages || "—"}
+            Page {displayPage}
+            {!hasMoreRemote && totalPages > 0 ? ` of ${totalPages}` : ""}
+            {hasMoreRemote && estimatedPages > displayPage
+              ? ` of about ${estimatedPages.toLocaleString("en")}`
+              : ""}
           </Typography>
-          <Button
-            onClick={handleNextPage}
-            disabled={!canGoNext || isFetching}
-          >
-            {displayPage < totalPages ? "Next" : "Load more"}
+          <Button onClick={handleNextPage} disabled={!canGoNext}>
+            Next
           </Button>
         </StyledButtonsContainer>
       )}
-    </StyledContainer>
+    </Container>
   );
 };
 

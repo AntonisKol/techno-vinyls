@@ -1,18 +1,22 @@
 import { Box, styled, Typography } from "@mui/material";
 
 export const StyledContainer = styled(Box)(() => ({
-  width: "min(1200px, calc(100% - 32px))",
-  minHeight: "100vh",
+  flex: "1 0 auto",
+  width: "min(1120px, calc(100% - 36px))",
+  minHeight: 0,
   margin: "0 auto",
-  padding: "clamp(28px, 6vw, 72px) 0",
+  padding: "clamp(56px, 9vw, 104px) 0 clamp(56px, 8vw, 96px)",
+  "@media (max-width: 760px)": {
+    paddingTop: 55,
+  },
 }));
 
 export const StyledHeader = styled(Typography)(() => ({
   margin: 0,
   fontWeight: 700,
-  fontSize: "clamp(40px, 7vw, 76px)",
-  lineHeight: 1,
-  letterSpacing: "-.045em",
+  fontSize: "clamp(28px, 5vw, 40px)",
+  lineHeight: 1.1,
+  letterSpacing: ".14em",
 }));
 
 export const StyledAppDescription = styled(Typography)(({ theme }) => ({
@@ -25,11 +29,22 @@ export const StyledAppDescription = styled(Typography)(({ theme }) => ({
   lineHeight: 1.65,
 }));
 
+export const StyledFilterNote = styled(Typography)(({ theme }) => ({
+  maxWidth: 720,
+  margin: "-12px 0 24px",
+  paddingLeft: 18,
+  color: theme.palette.text.secondary,
+  fontSize: 13,
+  lineHeight: 1.6,
+  "& strong": { color: theme.palette.text.primary, fontWeight: 500 },
+}));
+
 export const StyledReleaseGrid = styled(Box)(() => ({
   display: "grid",
   gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))",
   gap: 12,
   marginTop: 24,
+  marginBottom: 24,
 }));
 
 export const StyledButtonsContainer = styled(Box)(() => ({

@@ -4,26 +4,29 @@ import {
   Card,
   CardActions,
   CardContent,
-  CircularProgress,
   Link,
+  Skeleton,
   Typography,
 } from "@mui/material";
 import { useState } from "react";
 import { useGetReleaseDetailsQuery } from "../../api/releasesApi";
 import { ReleaseSummary } from "../../types/release";
+import { cardDetails, cardFrame, TITLE_LINES } from "./cardFrame";
 
 const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
   const {
     currentData: details,
     isLoading,
     isError,
-    error,
   } = useGetReleaseDetailsQuery(release.id);
-  const isRateLimited =
-    error !== undefined && "status" in error && error.status === 429;
 
+  // The search result's catalogue number shows until the details arrive.
   const catnos = Array.from(
-    new Set(details?.labels?.map((label) => label.catno).filter(Boolean))
+    new Set(
+      (details?.labels?.map((label) => label.catno) ?? [release.catno]).filter(
+        (catno): catno is string => Boolean(catno) && catno !== "none"
+      )
+    )
   );
   const primaryImage = details?.images?.find(
     (image) => image.type === "primary"
@@ -40,9 +43,7 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
     }
   });
   const artworkUrls = Array.from(
-    new Set(
-      artworkCandidates.filter((url): url is string => Boolean(url))
-    )
+    new Set(artworkCandidates.filter((url): url is string => Boolean(url)))
   );
   const [artworkIndex, setArtworkIndex] = useState(0);
   const artworkUrl = artworkUrls[artworkIndex];
@@ -57,15 +58,7 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
   return (
     <Card
       sx={{
-        color: "text.primary",
-        border: "1px solid",
-        borderColor: "divider",
-        borderRadius: 1,
-        minHeight: 280,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        backgroundImage: "none",
+        ...cardFrame,
         transition: "border-color 0.15s, transform 0.15s",
         "&:hover": {
           borderColor: "primary.main",
@@ -117,6 +110,11 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
             sx={{
               lineHeight: 1.25,
               fontWeight: 800,
+              display: "-webkit-box",
+              WebkitLineClamp: TITLE_LINES,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              overflowWrap: "anywhere",
             }}
             title={release.title}
           >
@@ -128,7 +126,7 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
         </Box>
       </CardContent>
 
-      <CardContent sx={{ pt: 0, pb: 1, "&:last-child": { pb: 1 } }}>
+      <CardContent sx={cardDetails}>
         <Typography variant="body2" color="text.secondary" noWrap>
           {catnos?.length ? catnos.join(", ") : "Catalogue number unavailable"}
         </Typography>
@@ -136,9 +134,10 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
           sx={{ display: "flex", alignItems: "center", minHeight: 28, mt: 1 }}
         >
           {isLoading ? (
-            <CircularProgress
-              size={15}
-              thickness={2}
+            <Skeleton
+              animation="wave"
+              width={170}
+              height={28}
               aria-label="Loading Discogs lowest price"
             />
           ) : (
@@ -147,11 +146,7 @@ const ReleaseCard = ({ release }: { release: ReleaseSummary }) => {
               color={isError ? "text.secondary" : "primary.main"}
             >
               Discogs lowest price:{" "}
-              {isError
-                ? isRateLimited
-                  ? "Rate limit reached"
-                  : "Lookup failed"
-                : priceFormatted}
+              {isError ? "Temporarily unavailable" : priceFormatted}
             </Typography>
           )}
         </Box>
