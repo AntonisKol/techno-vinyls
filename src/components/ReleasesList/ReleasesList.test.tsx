@@ -152,6 +152,11 @@ describe("ReleasesList", () => {
       )
     ).toBeInTheDocument();
     expect(screen.queryByText(/Discogs results/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "(Data comes straight from Discogs, which limits how fast each visitor can load it, so some prices and dates can take a minute or two to appear.)"
+      )
+    ).toBeInTheDocument();
   });
 
   it("keeps paging past the first Discogs page with Next", () => {
