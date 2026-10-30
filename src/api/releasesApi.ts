@@ -1,5 +1,9 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { ReleaseSummary, ReleaseDetails } from "../types/release";
+import {
+  MarketplaceStats,
+  ReleaseSummary,
+  ReleaseDetails,
+} from "../types/release";
 import { apiBase, LOCAL_API_BASE } from "./apiBase";
 import { createRateLimiter } from "./rateLimiter";
 import { throttledBaseQuery } from "./throttledBaseQuery";
@@ -36,6 +40,14 @@ export const releasesApi = createApi({
       keepUnusedDataFor: 5 * 60,
     }),
 
+    // releases/{id} gives lowest_price in the caller's account currency, and in
+    // USD without a token (the hosted app); this endpoint honours curr_abbr
+    // either way and names the currency.
+    getMarketplaceStats: builder.query<MarketplaceStats, number>({
+      query: (id) => `marketplace/stats/${id}?curr_abbr=EUR`,
+      keepUnusedDataFor: 5 * 60,
+    }),
+
     searchReleasesByArtist: builder.query<
       SearchResponse,
       { artistName: string; page?: number }
@@ -52,5 +64,6 @@ export const releasesApi = createApi({
 export const {
   useGetTechnoVinylReleasesQuery,
   useGetReleaseDetailsQuery,
+  useGetMarketplaceStatsQuery,
   useSearchReleasesByArtistQuery,
 } = releasesApi;
