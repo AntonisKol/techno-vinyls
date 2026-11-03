@@ -72,7 +72,10 @@ page a minute or two later. It pushes nothing when the build hasn't changed.
 The push uses a deploy key with write access to the website repository only.
 Its public half is a deploy key on `AntonisKol/adns-space` (Settings → Deploy
 keys, "Allow write access"), and its private half is the `SITE_DEPLOY_KEY`
-secret here (Settings → Secrets and variables → Actions). Without the secret
+secret here (Settings → Secrets and variables → Actions). The website's
+"Protect main" ruleset lets deploy keys push to `main` without a pull request
+(Settings → Rules → Rulesets → Bypass list → Deploy keys); everyone else still
+needs one, and its "No force-push" ruleset has no exceptions. Without the secret
 the deploy job stops with an error saying so. To set it up or replace it:
 
 ```sh
