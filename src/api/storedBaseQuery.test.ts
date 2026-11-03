@@ -7,6 +7,7 @@ const details = {
   title: "Tar 40",
   year: 2026,
   released_formatted: "09 Jan 2026",
+  released: "2026-01-09",
   labels: [{ name: "Tar Hallow", catno: "TAR040", entity_type: "1" }],
   images: [{ type: "primary", uri: "https://images.example/7.jpg" }],
   tracklist: [{ title: "A1" }],
@@ -28,6 +29,7 @@ describe("storedBaseQuery", () => {
     expect(stored).toEqual({
       data: expect.objectContaining({
         released_formatted: "09 Jan 2026",
+        released: "2026-01-09",
         labels: [{ name: "Tar Hallow", catno: "TAR040" }],
       }),
     });

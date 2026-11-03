@@ -1,7 +1,7 @@
 import { ReleaseSummary } from "./types/release";
 
 export const filterStrictlyTechnoReleases = (
-  releases: ReleaseSummary[]
+  releases: ReleaseSummary[],
 ): ReleaseSummary[] => {
   return releases.filter((release) => {
     if (!Array.isArray(release.format)) return false;
@@ -12,6 +12,24 @@ export const filterStrictlyTechnoReleases = (
     if (!release.style.includes("Techno")) return false;
     return release.style.every((style) => style === "Techno");
   });
+};
+
+const MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
+
+// "07 Aug 2026" → "2026-08-07", "Mar 2026" → "2026-03", "2026" → "2026":
+// details stored in the browser before the sortable date was kept have only
+// Discogs' date text.
+export const dateFromFormatted = (formatted?: string) => {
+  const parts = formatted?.trim().split(/\s+/) ?? [];
+  const year = parts.pop();
+  if (!year || !/^\d{4}$/.test(year)) return undefined;
+  const month = MONTHS.indexOf(parts.pop() ?? "") + 1;
+  const day = parts.pop();
+  if (!month) return year;
+  const mm = String(month).padStart(2, "0");
+  return day && /^\d{1,2}$/.test(day)
+    ? `${year}-${mm}-${day}`
+    : `${year}-${mm}`;
 };
 
 // "2026" and "2026-08" sort after every full date in 2026, as Discogs leaves
@@ -25,7 +43,7 @@ const dateKey = (date: string) => {
 // equal dates keep Discogs' order.
 export const sortNewestFirst = (
   releases: ReleaseSummary[],
-  releasedById: Record<number, string | undefined>
+  releasedById: Record<number, string | undefined>,
 ): ReleaseSummary[] => {
   const key = (release: ReleaseSummary) =>
     dateKey(releasedById[release.id] || String(release.year || ""));
