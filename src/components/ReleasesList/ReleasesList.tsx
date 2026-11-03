@@ -7,7 +7,8 @@ import {
   useSearchReleasesByArtistQuery,
 } from "../../api/releasesApi";
 import { ReleaseSummary } from "../../types/release";
-import { filterStrictlyTechnoReleases } from "../../helpers";
+import { filterStrictlyTechnoReleases, sortNewestFirst } from "../../helpers";
+import { useReleasedDates } from "../../hooks/useReleasedDates";
 import ArtistSearch from "../ArtistSearch/ArtistSearch";
 import {
   StyledAppDescription,
@@ -106,10 +107,14 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
   }, [activeData, artistName]);
 
   const totalPages = Math.ceil(filteredReleases.length / RELEASES_PER_PAGE);
-  const currentPageReleases = filteredReleases.slice(
+  const pageReleases = filteredReleases.slice(
     (displayPage - 1) * RELEASES_PER_PAGE,
     displayPage * RELEASES_PER_PAGE
   );
+  // Discogs sorts by year only, so each page is put in date order here as its
+  // cards load their full release dates.
+  const releasedDates = useReleasedDates(pageReleases.map(({ id }) => id));
+  const currentPageReleases = sortNewestFirst(pageReleases, releasedDates);
 
   const hasMoreRemote = rawPage < totalRemotePages;
   // Set together with filteredReleases, so the page's matches are counted.

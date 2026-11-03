@@ -18,6 +18,8 @@ export type ReleaseDetails = ReleaseSummary & {
   // Discogs' own date text: "07 Aug 2026", or "Jan 2026" / "2026" when the
   // day or month isn't known.
   released_formatted?: string;
+  // The same date for sorting: "2026-08-07", or "2026-01-00" / "2026".
+  released?: string;
 };
 
 // marketplace/stats/{id}: lowest_price is null when nothing is for sale.
