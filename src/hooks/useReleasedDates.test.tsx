@@ -3,7 +3,9 @@ import { Provider } from "react-redux";
 import { legacy_createStore as createStore } from "redux";
 import { useReleasedDates } from "./useReleasedDates";
 
-type State = { details: Record<number, { released: string }> };
+type State = {
+  details: Record<number, { released?: string; released_formatted?: string }>;
+};
 
 // RTK Query's ESM build doesn't load under CRA's Jest, so the details cache
 // is a plain store here, read the same way the endpoint's selector reads it.
@@ -43,5 +45,16 @@ describe("useReleasedDates", () => {
     });
 
     expect(result.current).toEqual({ 1: "2026-08-07", 2: undefined });
+  });
+
+  it("reads Discogs' date text when details have no sortable date", () => {
+    const store = createStore(() => ({
+      details: { 1: { released_formatted: "07 Aug 2026" } },
+    }));
+    const { result } = renderHook(() => useReleasedDates([1]), {
+      wrapper: ({ children }) => <Provider store={store}>{children}</Provider>,
+    });
+
+    expect(result.current).toEqual({ 1: "2026-08-07" });
   });
 });

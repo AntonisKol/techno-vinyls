@@ -1,4 +1,8 @@
-import { filterStrictlyTechnoReleases, sortNewestFirst } from "./helpers";
+import {
+  dateFromFormatted,
+  filterStrictlyTechnoReleases,
+  sortNewestFirst,
+} from "./helpers";
 import { ReleaseSummary } from "./types/release";
 
 const release = (style: string[]): ReleaseSummary => ({
@@ -12,8 +16,7 @@ const release = (style: string[]): ReleaseSummary => ({
 
 describe("filterStrictlyTechnoReleases", () => {
   it("keeps releases tagged only as Techno", () => {
-    expect(filterStrictlyTechnoReleases([release(["Techno"])]))
-      .toHaveLength(1);
+    expect(filterStrictlyTechnoReleases([release(["Techno"])])).toHaveLength(1);
   });
 
   it("excludes cross-genre and untagged releases", () => {
@@ -60,9 +63,19 @@ describe("sortNewestFirst", () => {
   it("falls back to the year, and keeps Discogs' order for equal dates", () => {
     const sorted = sortNewestFirst(
       [withId(1), withId(2), withId(3, 2025), withId(4)],
-      { 4: "2026-01-15" }
+      { 4: "2026-01-15" },
     );
 
     expect(sorted.map(({ id }) => id)).toEqual([4, 1, 2, 3]);
+  });
+});
+
+describe("dateFromFormatted", () => {
+  it("turns Discogs' date text into a sortable date", () => {
+    expect(dateFromFormatted("07 Aug 2026")).toBe("2026-08-07");
+    expect(dateFromFormatted("Mar 2026")).toBe("2026-03");
+    expect(dateFromFormatted("2026")).toBe("2026");
+    expect(dateFromFormatted(undefined)).toBeUndefined();
+    expect(dateFromFormatted("unknown")).toBeUndefined();
   });
 });

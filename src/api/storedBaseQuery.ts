@@ -29,6 +29,7 @@ const keep = (data: ReleaseDetails): ReleaseDetails => ({
   genre: data.genre,
   style: data.style,
   released_formatted: data.released_formatted,
+  released: data.released,
   labels: data.labels?.map(({ name, catno }) => ({ name, catno })),
   images: data.images?.map(({ type, uri, uri150 }) => ({ type, uri, uri150 })),
 });
