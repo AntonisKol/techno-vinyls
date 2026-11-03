@@ -16,7 +16,7 @@ export const useReleasedDates = (ids: number[]) =>
             id,
             details?.released || dateFromFormatted(details?.released_formatted),
           ];
-        }),
+        })
       ) as Record<number, string | undefined>,
-    shallowEqual,
+    shallowEqual
   );

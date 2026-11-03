@@ -22,10 +22,7 @@ jest.mock("../api/releasesApi", () => ({
 describe("useReleasedDates", () => {
   it("gives the dates of loaded details, and undefined for the rest", () => {
     const store = createStore(
-      (
-        state: State = { details: {} },
-        action: { type: string; id?: number },
-      ) =>
+      (state: State = { details: {} }, action: { type: string; id?: number }) =>
         action.type === "loaded" && action.id
           ? {
               details: {
@@ -33,7 +30,7 @@ describe("useReleasedDates", () => {
                 [action.id]: { released: "2026-08-07" },
               },
             }
-          : state,
+          : state
     );
     const { result } = renderHook(() => useReleasedDates([1, 2]), {
       wrapper: ({ children }) => <Provider store={store}>{children}</Provider>,

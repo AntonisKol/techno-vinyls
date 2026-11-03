@@ -16,9 +16,13 @@ next Discogs page loads on its own when a page runs out. Discogs search reaches
 the newest 10,000 results of a query, even when it reports more.
 
 Discogs sorts its search by year only, so within a year its order says nothing
-about the date. Each page is put in date order in the app as its cards load
-their full release dates, which means cards can move while a page loads, and
-a later page can still hold a newer date from the same year.
+about the date. The main list therefore comes from a release index built each
+night (`scripts/build-index.mjs`): every exact match among the newest 10,000
+results with its full release date, newest first, so each page is older than
+the one before. Releases added to Discogs during the day appear the next
+morning; prices are always live. Artist search (and the main list when there
+is no index, as on local runs) uses Discogs search, and each page is put in
+date order as its cards load their dates.
 
 ## Run locally
 
@@ -85,7 +89,20 @@ gh secret set SITE_DEPLOY_KEY --repo AntonisKol/techno-vinyls < deploy_key
 rm deploy_key deploy_key.pub
 ```
 
-The actions the workflow uses are pinned to exact commits, and
+[Another workflow](.github/workflows/index.yml) builds the release index at
+03:30 UTC (or when started by hand under Actions → Release index) and pushes
+it to `techno-vinyls/data/releases.json` on the website, the same way. It
+needs a Discogs personal token (discogs.com/settings/developers) as the
+`DISCOGS_TOKEN` secret: with one, Discogs allows 60 requests a minute, counted
+per token rather than per address. The first run dates about 2,000 releases
+in about 40 minutes; after that, dates already in the index are reused, so a
+night takes a few minutes. To try it locally:
+
+```sh
+DISCOGS_TOKEN=… node scripts/build-index.mjs build/releases.json
+```
+
+The actions the workflows use are pinned to exact commits, and
 [Dependabot](.github/dependabot.yml) proposes their updates as pull requests.
 
 ## Built with

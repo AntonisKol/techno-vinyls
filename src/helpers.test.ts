@@ -63,7 +63,7 @@ describe("sortNewestFirst", () => {
   it("falls back to the year, and keeps Discogs' order for equal dates", () => {
     const sorted = sortNewestFirst(
       [withId(1), withId(2), withId(3, 2025), withId(4)],
-      { 4: "2026-01-15" },
+      { 4: "2026-01-15" }
     );
 
     expect(sorted.map(({ id }) => id)).toEqual([4, 1, 2, 3]);
