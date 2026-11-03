@@ -142,7 +142,7 @@ describe("ReleasesList", () => {
     await waitFor(() => {
       expect(screen.getAllByTestId("release")).toHaveLength(1);
     });
-    expect(HTMLElement.prototype.scrollIntoView).not.toHaveBeenCalled();
+    expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(1);
     expect(screen.getByText(/^Page 2 of about/)).toBeInTheDocument();
     expect(screen.queryByText(/of 2$/)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Previous" })).toBeEnabled();
@@ -390,5 +390,24 @@ describe("ReleasesList", () => {
       { page: 1 },
       { skip: true }
     );
+  });
+
+  it("moves to the first card on Next and Previous, but not on load", () => {
+    mockUseGetTechnoVinylReleasesQuery.mockImplementation(
+      discogsPages([{ techno: 13 }])
+    );
+    const scroll = HTMLElement.prototype.scrollIntoView as jest.Mock;
+
+    render(<ReleasesList />);
+    expect(scroll).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    fireEvent.click(screen.getByRole("button", { name: "Previous" }));
+
+    expect(scroll).toHaveBeenCalledTimes(2);
+    expect(scroll).toHaveBeenLastCalledWith({
+      behavior: "smooth",
+      block: "start",
+    });
   });
 });

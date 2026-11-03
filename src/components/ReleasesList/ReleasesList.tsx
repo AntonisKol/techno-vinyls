@@ -53,6 +53,7 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
   const [artistName, setArtistName] = useState<string | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const loadedPages = useRef(new Set<string>());
+  const listTop = useRef<HTMLDivElement>(null);
   // The main list comes from the nightly index, in full date order, when the
   // site has one; otherwise from Discogs search, like artist search.
   const index = useReleaseIndex();
@@ -173,11 +174,18 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
 
   const canGoNext = displayPage < totalPages || hasMoreRemote;
 
+  // Paging moves the view to the first card of the new page. Only on a click:
+  // on load, the adnsaudio.com page must stay where it is.
+  const goToPage = (page: number) => {
+    setDisplayPage(page);
+    listTop.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const handleNextPage = () => {
     // Paging stays possible while the next Discogs page loads in the
     // background; skeletons fill the page until its releases arrive.
     if (!canGoNext) return;
-    setDisplayPage((page) => page + 1);
+    goToPage(displayPage + 1);
   };
 
   const handleRetry = () => {
@@ -286,6 +294,7 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
         </StyledStatus>
       )}
 
+      <Box ref={listTop} sx={{ scrollMarginTop: 16 }} />
       {currentPageReleases.length + skeletons > 0 && (
         <StyledReleaseGrid aria-busy={skeletons > 0}>
           {currentPageReleases.map((release) => (
@@ -300,7 +309,7 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
       {(releases.length > 0 || hasMoreRemote) && (
         <StyledButtonsContainer>
           <Button
-            onClick={() => setDisplayPage((page) => Math.max(1, page - 1))}
+            onClick={() => goToPage(Math.max(1, displayPage - 1))}
             disabled={displayPage === 1}
           >
             Previous
