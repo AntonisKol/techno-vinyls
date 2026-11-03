@@ -3,11 +3,15 @@ import {
   useGetTechnoVinylReleasesQuery,
   useSearchReleasesByArtistQuery,
 } from "../../api/releasesApi";
+import { useReleasedDates } from "../../hooks/useReleasedDates";
 import ReleasesList from "./ReleasesList";
 
 jest.mock("../../api/releasesApi", () => ({
   useGetTechnoVinylReleasesQuery: jest.fn(),
   useSearchReleasesByArtistQuery: jest.fn(),
+}));
+jest.mock("../../hooks/useReleasedDates", () => ({
+  useReleasedDates: jest.fn(),
 }));
 jest.mock("../ArtistSearch/ArtistSearch", () => () => null);
 jest.mock(
@@ -64,6 +68,7 @@ const mockUseGetTechnoVinylReleasesQuery =
   useGetTechnoVinylReleasesQuery as jest.Mock;
 const mockUseSearchReleasesByArtistQuery =
   useSearchReleasesByArtistQuery as jest.Mock;
+const mockUseReleasedDates = useReleasedDates as jest.Mock;
 
 describe("ReleasesList", () => {
   beforeEach(() => {
@@ -79,6 +84,7 @@ describe("ReleasesList", () => {
       error: { status: 429, data: {} },
       refetch: jest.fn(),
     });
+    mockUseReleasedDates.mockReturnValue({});
     mockUseSearchReleasesByArtistQuery.mockReturnValue({
       currentData: undefined,
       isLoading: false,
@@ -325,5 +331,23 @@ describe("ReleasesList", () => {
     render(<ReleasesList />);
 
     expect(screen.getByText(/^Page /)).toHaveTextContent("Page 1 of about 234");
+  });
+
+  it("puts each page in release date order as the dates load", () => {
+    mockUseGetTechnoVinylReleasesQuery.mockImplementation(
+      discogsPages([{ techno: 4 }])
+    );
+    // Release 4's details have not loaded yet; release 3 only has a year.
+    mockUseReleasedDates.mockReturnValue({
+      1: "2026-03-02",
+      2: "2026-10-12",
+      3: "2026",
+    });
+
+    render(<ReleasesList />);
+
+    expect(
+      screen.getAllByTestId("release").map((card) => card.textContent)
+    ).toEqual(["Release 2", "Release 1", "Release 3", "Release 4"]);
   });
 });
