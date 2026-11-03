@@ -15,6 +15,11 @@ out, and artist search uses the same filter. Pages hold twelve releases; the
 next Discogs page loads on its own when a page runs out. Discogs search reaches
 the newest 10,000 results of a query, even when it reports more.
 
+Discogs sorts its search by year only, so within a year its order says nothing
+about the date. Each page is put in date order in the app as its cards load
+their full release dates, which means cards can move while a page loads, and
+a later page can still hold a newer date from the same year.
+
 ## Run locally
 
 ```sh
