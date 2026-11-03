@@ -32,7 +32,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "build:site": "GENERATE_SOURCEMAP=false PUBLIC_URL=/techno-vinyls/app REACT_APP_API_BASE=https://api.discogs.com/ react-scripts build",
+    "build:site": "GENERATE_SOURCEMAP=false PUBLIC_URL=/techno-vinyls/app REACT_APP_API_BASE=https://api.discogs.com/ REACT_APP_INDEX_URL=/techno-vinyls/data/releases.json react-scripts build",
     "test:scripts": "node --test scripts/*.test.mjs",
     "publish:site": "npm run build:site && node scripts/copy-to-site.mjs"
   },

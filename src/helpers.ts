@@ -1,7 +1,7 @@
 import { ReleaseSummary } from "./types/release";
 
 export const filterStrictlyTechnoReleases = (
-  releases: ReleaseSummary[],
+  releases: ReleaseSummary[]
 ): ReleaseSummary[] => {
   return releases.filter((release) => {
     if (!Array.isArray(release.format)) return false;
@@ -39,13 +39,16 @@ const dateKey = (date: string) => {
   return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
 };
 
-// Newest first by full release date where it has loaded, otherwise by year;
+// Newest first by full release date where it has loaded (or the index has
+// it), otherwise by year;
 // equal dates keep Discogs' order.
 export const sortNewestFirst = (
   releases: ReleaseSummary[],
-  releasedById: Record<number, string | undefined>,
+  releasedById: Record<number, string | undefined>
 ): ReleaseSummary[] => {
   const key = (release: ReleaseSummary) =>
-    dateKey(releasedById[release.id] || String(release.year || ""));
+    dateKey(
+      releasedById[release.id] || release.released || String(release.year || "")
+    );
   return [...releases].sort((a, b) => key(b).localeCompare(key(a)));
 };

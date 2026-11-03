@@ -148,6 +148,18 @@ describe("ReleaseCard", () => {
     expect(screen.queryByText("2026")).not.toBeInTheDocument();
   });
 
+  it("shows the index's release date while the details load", () => {
+    mockUseGetReleaseDetailsQuery.mockReturnValue({ currentData: undefined });
+
+    render(
+      <ReleaseCard
+        release={{ ...release, released_formatted: "12 Oct 2026" }}
+      />
+    );
+
+    expect(screen.getByText("12 Oct 2026")).toBeInTheDocument();
+  });
+
   it("shows the search result's catalogue number while the details load", () => {
     mockUseGetReleaseDetailsQuery.mockReturnValue({ currentData: undefined });
     mockUseGetMarketplaceStatsQuery.mockReturnValue({

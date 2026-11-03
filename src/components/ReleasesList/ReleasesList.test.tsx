@@ -3,12 +3,16 @@ import {
   useGetTechnoVinylReleasesQuery,
   useSearchReleasesByArtistQuery,
 } from "../../api/releasesApi";
+import { useReleaseIndex } from "../../hooks/useReleaseIndex";
 import { useReleasedDates } from "../../hooks/useReleasedDates";
 import ReleasesList from "./ReleasesList";
 
 jest.mock("../../api/releasesApi", () => ({
   useGetTechnoVinylReleasesQuery: jest.fn(),
   useSearchReleasesByArtistQuery: jest.fn(),
+}));
+jest.mock("../../hooks/useReleaseIndex", () => ({
+  useReleaseIndex: jest.fn(),
 }));
 jest.mock("../../hooks/useReleasedDates", () => ({
   useReleasedDates: jest.fn(),
@@ -17,9 +21,8 @@ jest.mock("../ArtistSearch/ArtistSearch", () => () => null);
 jest.mock(
   "../ReleaseCard",
   () =>
-    ({ release }: { release: { title: string } }) => (
+    ({ release }: { release: { title: string } }) =>
       <div data-testid="release">{release.title}</div>
-    )
 );
 
 const release = (id: number, style = ["Techno"]) => ({
@@ -69,6 +72,7 @@ const mockUseGetTechnoVinylReleasesQuery =
 const mockUseSearchReleasesByArtistQuery =
   useSearchReleasesByArtistQuery as jest.Mock;
 const mockUseReleasedDates = useReleasedDates as jest.Mock;
+const mockUseReleaseIndex = useReleaseIndex as jest.Mock;
 
 describe("ReleasesList", () => {
   beforeEach(() => {
@@ -85,6 +89,7 @@ describe("ReleasesList", () => {
       refetch: jest.fn(),
     });
     mockUseReleasedDates.mockReturnValue({});
+    mockUseReleaseIndex.mockReturnValue({ status: "missing" });
     mockUseSearchReleasesByArtistQuery.mockReturnValue({
       currentData: undefined,
       isLoading: false,
@@ -349,5 +354,41 @@ describe("ReleasesList", () => {
     expect(
       screen.getAllByTestId("release").map((card) => card.textContent)
     ).toEqual(["Release 2", "Release 1", "Release 3", "Release 4"]);
+  });
+
+  it("pages through the nightly index in its order, without Discogs search", () => {
+    const releases = Array.from({ length: 13 }, (_, index) => ({
+      ...release(index + 1),
+      released: `2026-10-${String(30 - index).padStart(2, "0")}`,
+    }));
+    mockUseReleaseIndex.mockReturnValue({ status: "ready", releases });
+
+    render(<ReleasesList />);
+
+    const titles = () =>
+      screen.getAllByTestId("release").map((card) => card.textContent);
+    expect(titles()).toEqual(releases.slice(0, 12).map(({ title }) => title));
+    expect(screen.getByText("Page 1 of 2")).toBeInTheDocument();
+    expect(mockUseGetTechnoVinylReleasesQuery).toHaveBeenLastCalledWith(
+      { page: 1 },
+      { skip: true }
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+
+    expect(titles()).toEqual(["Release 13"]);
+    expect(screen.getByRole("button", { name: "Next" })).toBeDisabled();
+  });
+
+  it("shows skeletons while the index loads", () => {
+    mockUseReleaseIndex.mockReturnValue({ status: "loading" });
+
+    render(<ReleasesList />);
+
+    expect(screen.getByRole("status")).toHaveTextContent("Loading releases…");
+    expect(mockUseGetTechnoVinylReleasesQuery).toHaveBeenLastCalledWith(
+      { page: 1 },
+      { skip: true }
+    );
   });
 });

@@ -1,0 +1,72 @@
+# Each night, lists every exact-Techno vinyl release among the newest 10,000
+# Discogs search results with its full release date, newest first
+# (scripts/build-index.mjs), and publishes the list with the website, where
+# the main list reads it. Dates from the last list are reused, so a night
+# costs a request per new release only. Can also be started by hand.
+name: Release index
+
+on:
+  schedule:
+    - cron: "30 3 * * *" # 03:30 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  index:
+    name: build the release index
+    runs-on: ubuntu-24.04
+    # The first run dates ~2,000 releases at 55 a minute.
+    timeout-minutes: 120
+    # Shares the website's queue with the deploy job in ci.yml.
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
+
+    steps:
+      - name: Check for the secrets
+        env:
+          DISCOGS_TOKEN: ${{ secrets.DISCOGS_TOKEN }}
+          SITE_DEPLOY_KEY: ${{ secrets.SITE_DEPLOY_KEY }}
+        run: |
+          for name in DISCOGS_TOKEN SITE_DEPLOY_KEY; do
+            if [ -z "${!name}" ]; then
+              echo "::error::No $name secret: see 'CI and deploys' in the README."
+              exit 1
+            fi
+          done
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: AntonisKol/adns-space
+          path: site
+          ssh-key: ${{ secrets.SITE_DEPLOY_KEY }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Build the index
+        env:
+          DISCOGS_TOKEN: ${{ secrets.DISCOGS_TOKEN }}
+        run: node scripts/build-index.mjs site/techno-vinyls/data/releases.json
+
+      - name: Push the website
+        working-directory: site
+        run: |
+          git add techno-vinyls/data/releases.json
+          if git diff --cached --quiet; then
+            echo "No new releases tonight."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Techno Vinyls: nightly release index"
+          git pull --rebase origin main
+          git push origin HEAD:main

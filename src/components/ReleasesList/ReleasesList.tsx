@@ -8,6 +8,7 @@ import {
 } from "../../api/releasesApi";
 import { ReleaseSummary } from "../../types/release";
 import { filterStrictlyTechnoReleases, sortNewestFirst } from "../../helpers";
+import { useReleaseIndex } from "../../hooks/useReleaseIndex";
 import { useReleasedDates } from "../../hooks/useReleasedDates";
 import ArtistSearch from "../ArtistSearch/ArtistSearch";
 import {
@@ -52,6 +53,11 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
   const [artistName, setArtistName] = useState<string | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const loadedPages = useRef(new Set<string>());
+  // The main list comes from the nightly index, in full date order, when the
+  // site has one; otherwise from Discogs search, like artist search.
+  const index = useReleaseIndex();
+  const fromIndex = artistName === null && index.status === "ready";
+  const indexLoading = artistName === null && index.status === "loading";
 
   const {
     currentData: technoData,
@@ -61,7 +67,7 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
     refetch: refetchTechno,
   } = useGetTechnoVinylReleasesQuery(
     { page: rawPage },
-    { skip: artistName !== null }
+    { skip: artistName !== null || index.status !== "missing" }
   );
 
   const {
@@ -76,8 +82,10 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
   );
 
   const activeData = artistName === null ? technoData : artistData;
-  const isLoading = artistName === null ? technoLoading : artistLoading;
-  const isFetching = artistName === null ? technoFetching : artistFetching;
+  const isLoading =
+    artistName === null ? technoLoading || indexLoading : artistLoading;
+  const isFetching =
+    artistName === null ? technoFetching || indexLoading : artistFetching;
   const error = artistName === null ? technoError : artistError;
   const totalRemotePages = pagination?.pages ?? 0;
 
@@ -106,17 +114,19 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
     });
   }, [activeData, artistName]);
 
-  const totalPages = Math.ceil(filteredReleases.length / RELEASES_PER_PAGE);
-  const pageReleases = filteredReleases.slice(
+  const releases =
+    fromIndex && index.status === "ready" ? index.releases : filteredReleases;
+  const totalPages = Math.ceil(releases.length / RELEASES_PER_PAGE);
+  const pageReleases = releases.slice(
     (displayPage - 1) * RELEASES_PER_PAGE,
     displayPage * RELEASES_PER_PAGE
   );
-  // Discogs sorts by year only, so each page is put in date order here as its
-  // cards load their full release dates.
+  // Discogs search sorts by year only, so each page is put in date order here
+  // as its cards load their full release dates (the index is in order already).
   const releasedDates = useReleasedDates(pageReleases.map(({ id }) => id));
   const currentPageReleases = sortNewestFirst(pageReleases, releasedDates);
 
-  const hasMoreRemote = rawPage < totalRemotePages;
+  const hasMoreRemote = !fromIndex && rawPage < totalRemotePages;
   // Set together with filteredReleases, so the page's matches are counted.
   const rawPageProcessed = pagination?.page === rawPage;
 
@@ -125,12 +135,12 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
   // following page straight away.
   useEffect(() => {
     if (isFetching || error || !rawPageProcessed || !hasMoreRemote) return;
-    if (filteredReleases.length > (displayPage + 1) * RELEASES_PER_PAGE) return;
+    if (releases.length > (displayPage + 1) * RELEASES_PER_PAGE) return;
     setRawPage((page) => page + 1);
   }, [
     displayPage,
     error,
-    filteredReleases.length,
+    releases.length,
     hasMoreRemote,
     isFetching,
     pagination,
@@ -190,8 +200,7 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
   const estimatedPages =
     checkedResults > 0
       ? Math.ceil(
-          ((filteredReleases.length / checkedResults) * reachable) /
-            RELEASES_PER_PAGE
+          ((releases.length / checkedResults) * reachable) / RELEASES_PER_PAGE
         )
       : 0;
   const showError = Boolean(error);
@@ -205,7 +214,7 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
     !isFetching &&
     !showError &&
     !hasMoreRemote &&
-    filteredReleases.length === 0;
+    releases.length === 0;
 
   const Container = embedded ? Box : StyledContainer;
 
@@ -267,9 +276,7 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
 
       {isFetching && (
         <Box role="status" sx={visuallyHidden}>
-          {filteredReleases.length > 0
-            ? "Loading more releases…"
-            : "Loading releases…"}
+          {releases.length > 0 ? "Loading more releases…" : "Loading releases…"}
         </Box>
       )}
 
@@ -290,7 +297,7 @@ const ReleasesList = ({ embedded = false }: { embedded?: boolean }) => {
         </StyledReleaseGrid>
       )}
 
-      {(filteredReleases.length > 0 || hasMoreRemote) && (
+      {(releases.length > 0 || hasMoreRemote) && (
         <StyledButtonsContainer>
           <Button
             onClick={() => setDisplayPage((page) => Math.max(1, page - 1))}
