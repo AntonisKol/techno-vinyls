@@ -70,11 +70,11 @@ fill in as the limit allows.
 tests, the type check and the build on each pull request and each push to
 `main`. After a push to `main` passes, it publishes the site build to
 adnsaudio.com: it runs `npm run publish:site` into the website repository
-(`AntonisKol/adns-space`) and pushes there, and GitHub Pages serves the new
+(`AntonisKol/adnsaudio.com`) and pushes there, and GitHub Pages serves the new
 page a minute or two later. It pushes nothing when the build hasn't changed.
 
 The push uses a deploy key with write access to the website repository only.
-Its public half is a deploy key on `AntonisKol/adns-space` (Settings → Deploy
+Its public half is a deploy key on `AntonisKol/adnsaudio.com` (Settings → Deploy
 keys, "Allow write access"), and its private half is the `SITE_DEPLOY_KEY`
 secret here (Settings → Secrets and variables → Actions). The website's
 "Protect main" ruleset lets deploy keys push to `main` without a pull request
@@ -84,7 +84,7 @@ the deploy job stops with an error saying so. To set it up or replace it:
 
 ```sh
 ssh-keygen -t ed25519 -N "" -C "techno-vinyls deploy" -f deploy_key
-gh repo deploy-key add deploy_key.pub --repo AntonisKol/adns-space --allow-write --title "techno-vinyls CI deploy"
+gh repo deploy-key add deploy_key.pub --repo AntonisKol/adnsaudio.com --allow-write --title "techno-vinyls CI deploy"
 gh secret set SITE_DEPLOY_KEY --repo AntonisKol/techno-vinyls < deploy_key
 rm deploy_key deploy_key.pub
 ```
