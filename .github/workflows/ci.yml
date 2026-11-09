@@ -1,7 +1,7 @@
 # Checks every pull request and push to main: the tests, the type check and
 # the build. After a push to main passes, it publishes the build to
 # adnsaudio.com: the same as `npm run publish:site`, into the website
-# repository (AntonisKol/adns-space, served by GitHub Pages from its main).
+# repository (AntonisKol/adns-audio, served by GitHub Pages from its main).
 name: CI
 
 on:
@@ -81,7 +81,7 @@ jobs:
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: AntonisKol/adns-space
+          repository: AntonisKol/adns-audio
           path: site
           # Full history, so the push can rebase onto newer website commits.
           fetch-depth: 0
